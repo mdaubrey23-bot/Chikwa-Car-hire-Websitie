@@ -83,6 +83,490 @@ const AdminDashboard = () => {
   const [quotes, setQuotes] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'fleet' | 'quotes' | 'availability'>('fleet');
   const [editingCar, setEditingCar] = useState<Car | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [newCar, setNewCar] = useState<Partial<Car>>({
+    name: '', category: 'Economy', passengers: 5, luggage: 2,
+    transmission: 'Automatic', pricePerDay: 800, image: '',
+  });
+
+  useEffect(() => {
+    const carsQ = query(collection(db, 'cars'), orderBy('createdAt', 'desc'));
+    const unsubCars = onSnapshot(carsQ, (snapshot) => {
+      setCars(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Car)));
+    });
+    const quotesQ = query(collection(db, 'quotes'), orderBy('createdAt', 'desc'));
+    const unsubQuotes = onSnapshot(quotesQ, (snapshot) => {
+      setQuotes(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    return () => { unsubCars(); unsubQuotes(); };
+  }, []);
+
+  const handleAddCar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCar.name || !newCar.image) return;
+    try {
+      await addDoc(collection(db, 'cars'), { ...newCar, createdAt: serverTimestamp() });
+      setNewCar({ name: '', category: 'Economy', passengers: 5, luggage: 2, transmission: 'Automatic', pricePerDay: 800, image: '' });
+    } catch (error) { console.error(error); }
+  };
+
+  const handleUpdateCar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCar) return;
+    try {
+      await updateDoc(doc(db, 'cars', editingCar.id), {
+        name: editingCar.name,
+        category: editingCar.category,
+        passengers: editingCar.passengers,
+        luggage: editingCar.luggage,
+        transmission: editingCar.transmission,
+        pricePerDay: editingCar.pricePerDay,
+        image: editingCar.image,
+      });
+      setSaveSuccess(true);
+      setTimeout(() => {
+        setSaveSuccess(false);
+        setShowEditModal(false);
+        setEditingCar(null);
+      }, 1500);
+    } catch (error) { console.error(error); }
+  };
+
+  const isCarBooked = (carId: string, checkIn: Date, checkOut: Date) => {
+    return quotes.some(q => {
+      if (q.car?.id !== carId) return false;
+      const qIn = new Date(q.pickupDateTime);
+      const qOut = new Date(q.dropoffDateTime);
+      return checkIn < qOut && checkOut > qIn;
+    });
+  };
+
+  const openEdit = (car: Car) => {
+    setEditingCar({...car});
+    setShowEditModal(true);
+    setSaveSuccess(false);
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-12">
+
+      {/* Edit Modal */}
+      <AnimatePresence>
+        {showEditModal && editingCar && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-brand-blue/80 backdrop-blur-sm"
+              onClick={() => { setShowEditModal(false); setEditingCar(null); }}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+            >
+              {/* Modal Header */}
+              <div className="bg-brand-blue px-8 py-6 flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-display font-black text-white uppercase tracking-tight">Edit Vehicle</h3>
+                  <p className="text-brand-orange text-xs font-bold uppercase tracking-widest mt-1">{editingCar.name}</p>
+                </div>
+                <button onClick={() => { setShowEditModal(false); setEditingCar(null); }} className="text-white/50 hover:text-white transition-colors">
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="p-8">
+                {/* Live Preview */}
+                <div className="mb-8 rounded-2xl overflow-hidden border border-zinc-100 bg-zinc-50">
+                  {editingCar.image ? (
+                    <div className="relative">
+                      <img
+                        src={editingCar.image}
+                        alt="Preview"
+                        className="w-full h-48 object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                      <div className="absolute top-3 right-3 bg-brand-blue/90 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">
+                        {editingCar.category}
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-brand-blue/80 to-transparent p-4">
+                        <p className="text-white font-display font-black text-lg uppercase">{editingCar.name || 'Vehicle Name'}</p>
+                        <p className="text-brand-orange text-xs font-bold">ZMW {editingCar.pricePerDay?.toLocaleString()}/day</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-48 flex items-center justify-center">
+                      <div className="text-center">
+                        <CarIcon size={48} className="mx-auto text-zinc-200 mb-2" />
+                        <p className="text-zinc-300 text-xs font-bold uppercase tracking-widest">Paste an image URL below to preview</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <form onSubmit={handleUpdateCar} className="space-y-5">
+                  {/* Vehicle Name */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Vehicle Name</label>
+                    <input
+                      required
+                      className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-brand-orange outline-none text-brand-blue font-bold text-lg"
+                      value={editingCar.name}
+                      onChange={e => setEditingCar({...editingCar, name: e.target.value})}
+                      placeholder="e.g. Toyota Land Cruiser 200"
+                    />
+                  </div>
+
+                  {/* Image URL */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Photo URL</label>
+                    <input
+                      className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-brand-orange outline-none text-brand-blue font-medium"
+                      value={editingCar.image}
+                      onChange={e => setEditingCar({...editingCar, image: e.target.value})}
+                      placeholder="https://images.unsplash.com/..."
+                    />
+                    <p className="text-[10px] text-zinc-400 font-medium">Paste any image URL — Unsplash, Google Images (right-click → copy image address), etc.</p>
+                  </div>
+
+                  {/* Category & Transmission */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Category</label>
+                      <select
+                        className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-brand-orange outline-none text-brand-blue font-bold"
+                        value={editingCar.category}
+                        onChange={e => setEditingCar({...editingCar, category: e.target.value as any})}
+                      >
+                        <option value="Economy">Economy</option>
+                        <option value="SUV">SUV</option>
+                        <option value="Luxury">Luxury</option>
+                        <option value="Van">Van</option>
+                        <option value="Truck">Truck</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Transmission</label>
+                      <select
+                        className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-brand-orange outline-none text-brand-blue font-bold"
+                        value={editingCar.transmission}
+                        onChange={e => setEditingCar({...editingCar, transmission: e.target.value as any})}
+                      >
+                        <option value="Automatic">Automatic</option>
+                        <option value="Manual">Manual</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Passengers, Luggage, Price */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Passengers</label>
+                      <input
+                        type="number"
+                        min="1" max="20"
+                        className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-brand-orange outline-none text-brand-blue font-bold text-center"
+                        value={editingCar.passengers}
+                        onChange={e => setEditingCar({...editingCar, passengers: parseInt(e.target.value)})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Luggage</label>
+                      <input
+                        type="number"
+                        min="0" max="20"
+                        className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-brand-orange outline-none text-brand-blue font-bold text-center"
+                        value={editingCar.luggage}
+                        onChange={e => setEditingCar({...editingCar, luggage: parseInt(e.target.value)})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Price/Day (ZMW)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-brand-orange outline-none text-brand-blue font-bold text-center"
+                        value={editingCar.pricePerDay}
+                        onChange={e => setEditingCar({...editingCar, pricePerDay: parseFloat(e.target.value)})}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Save Button */}
+                  {saveSuccess ? (
+                    <div className="w-full bg-green-500 text-white py-4 rounded-2xl font-display font-bold uppercase tracking-widest text-center flex items-center justify-center gap-2">
+                      <CheckCircle2 size={20} /> Saved Successfully!
+                    </div>
+                  ) : (
+                    <button
+                      type="submit"
+                      className="w-full bg-brand-blue text-white py-4 rounded-2xl font-display font-bold uppercase tracking-widest hover:bg-brand-orange transition-all shadow-xl"
+                    >
+                      Save Changes
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => { setShowEditModal(false); setEditingCar(null); }}
+                    className="w-full py-3 text-zinc-400 font-bold uppercase text-[10px] tracking-widest hover:text-zinc-600"
+                  >
+                    Cancel
+                  </button>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Dashboard Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
+        <h2 className="text-4xl font-display font-black text-brand-blue uppercase">Owner Dashboard</h2>
+        <div className="flex bg-zinc-100 p-1 rounded-xl no-print flex-wrap gap-1">
+          {(['fleet', 'availability', 'quotes'] as const).map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)}
+              className={`px-5 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-brand-blue text-white shadow-lg' : 'text-zinc-500'}`}>
+              {tab === 'quotes' ? `Quotes (${quotes.length})` : tab === 'availability' ? 'Availability' : 'Fleet Manager'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Fleet Manager Tab */}
+      {activeTab === 'fleet' && (
+        <div className="grid lg:grid-cols-3 gap-12">
+          <div className="lg:col-span-1">
+            <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-200 sticky top-32">
+              <h3 className="text-xl font-display font-bold text-brand-blue mb-6">Add New Vehicle</h3>
+              <form onSubmit={handleAddCar} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Vehicle Name</label>
+                  <input placeholder="e.g. Toyota Land Cruiser" className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-brand-orange outline-none" value={newCar.name} onChange={e => setNewCar({...newCar, name: e.target.value})} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Category</label>
+                  <select className="w-full px-4 py-3 rounded-xl border border-zinc-200" value={newCar.category} onChange={e => setNewCar({...newCar, category: e.target.value as any})}>
+                    <option value="Economy">Economy</option>
+                    <option value="SUV">SUV</option>
+                    <option value="Luxury">Luxury</option>
+                    <option value="Van">Van</option>
+                    <option value="Truck">Truck</option>
+                  </select>
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-1/2 space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Pax</label>
+                    <input type="number" className="w-full px-4 py-3 rounded-xl border border-zinc-200" value={newCar.passengers} onChange={e => setNewCar({...newCar, passengers: parseInt(e.target.value)})} />
+                  </div>
+                  <div className="w-1/2 space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Bags</label>
+                    <input type="number" className="w-full px-4 py-3 rounded-xl border border-zinc-200" value={newCar.luggage} onChange={e => setNewCar({...newCar, luggage: parseInt(e.target.value)})} />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Daily Rate (ZMW)</label>
+                  <input type="number" className="w-full px-4 py-3 rounded-xl border border-zinc-200" value={newCar.pricePerDay} onChange={e => setNewCar({...newCar, pricePerDay: parseFloat(e.target.value)})} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Image URL</label>
+                  <input placeholder="https://..." className="w-full px-4 py-3 rounded-xl border border-zinc-200" value={newCar.image} onChange={e => setNewCar({...newCar, image: e.target.value})} />
+                </div>
+                <button type="submit" className="w-full bg-brand-blue text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-brand-orange transition-colors shadow-lg">Save Vehicle</button>
+              </form>
+            </div>
+          </div>
+
+          <div className="lg:col-span-2">
+            <div className="grid sm:grid-cols-2 gap-6">
+              {cars.map(car => {
+                const activeBookings = quotes.filter(q => q.car?.id === car.id && new Date(q.dropoffDateTime) > new Date());
+                const isCurrentlyBooked = isCarBooked(car.id, new Date(), addDays(new Date(), 1));
+                return (
+                  <div key={car.id} className="bg-white rounded-2xl border border-zinc-100 shadow-sm overflow-hidden group hover:shadow-lg transition-all">
+                    <div className="relative h-44 overflow-hidden bg-zinc-100">
+                      {car.image ? (
+                        <img src={car.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <CarIcon size={48} className="text-zinc-200" />
+                        </div>
+                      )}
+                      <div className={`absolute top-3 right-3 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${isCurrentlyBooked ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
+                        {isCurrentlyBooked ? 'Booked' : 'Available'}
+                      </div>
+                      {activeBookings.length > 0 && (
+                        <div className="absolute top-3 left-3 bg-brand-blue/90 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                          {activeBookings.length} upcoming
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-5">
+                      <h4 className="font-display font-black text-brand-blue text-lg uppercase leading-tight mb-1">{car.name}</h4>
+                      <p className="text-xs text-zinc-400 font-bold uppercase tracking-widest mb-4">{car.category} • {car.passengers} Pax • ZMW {car.pricePerDay?.toLocaleString()}/day</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => openEdit(car)}
+                          className="flex-1 py-2.5 bg-brand-blue text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-brand-orange transition-all flex items-center justify-center gap-1.5"
+                        >
+                          <Settings size={13} /> Edit
+                        </button>
+                        <button
+                          onClick={() => { if (confirm(`Delete ${car.name}? This cannot be undone.`)) deleteDoc(doc(db, 'cars', car.id)); }}
+                          className="flex-1 py-2.5 bg-red-50 border border-red-100 text-red-400 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {cars.length === 0 && (
+                <div className="col-span-2 text-center py-24 bg-zinc-50 rounded-3xl border border-dashed border-zinc-200">
+                  <CarIcon size={48} className="mx-auto text-zinc-200 mb-4" />
+                  <p className="text-zinc-400 font-medium uppercase tracking-widest text-xs">No vehicles added yet</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Availability Tab */}
+      {activeTab === 'availability' && (
+        <div className="space-y-8">
+          <div className="bg-zinc-50 p-6 rounded-2xl border border-zinc-100 flex flex-wrap gap-6 items-center">
+            <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-green-500"></div><span className="text-xs font-bold uppercase tracking-widest text-zinc-500">Available</span></div>
+            <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-red-500"></div><span className="text-xs font-bold uppercase tracking-widest text-zinc-500">Booked</span></div>
+            <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-brand-orange"></div><span className="text-xs font-bold uppercase tracking-widest text-zinc-500">Ending Soon (Today)</span></div>
+          </div>
+          <div className="grid gap-6">
+            {cars.map(car => {
+              const carBookings = quotes.filter(q => q.car?.id === car.id).sort((a, b) => new Date(a.pickupDateTime).getTime() - new Date(b.pickupDateTime).getTime());
+              const isCurrentlyBooked = isCarBooked(car.id, new Date(), addDays(new Date(), 1));
+              const endingToday = carBookings.some(q => { const out = new Date(q.dropoffDateTime); return out >= new Date() && out <= addDays(new Date(), 1); });
+              return (
+                <div key={car.id} className="bg-white rounded-2xl border border-zinc-100 shadow-sm overflow-hidden">
+                  <div className="flex items-center gap-6 p-6 border-b border-zinc-50">
+                    <img src={car.image} className="w-20 h-20 object-cover rounded-xl" />
+                    <div className="flex-grow">
+                      <div className="flex items-center gap-3 mb-1">
+                        <h4 className="font-display font-bold text-brand-blue text-lg">{car.name}</h4>
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${endingToday ? 'bg-brand-orange/10 text-brand-orange' : isCurrentlyBooked ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-600'}`}>
+                          {endingToday ? 'Ending Today' : isCurrentlyBooked ? 'Currently Booked' : 'Available Now'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-400 font-bold uppercase tracking-widest">{car.category} • {carBookings.length} total booking{carBookings.length !== 1 ? 's' : ''}</p>
+                    </div>
+                  </div>
+                  {carBookings.length > 0 ? (
+                    <div className="divide-y divide-zinc-50">
+                      {carBookings.map((q, i) => {
+                        const pickUp = new Date(q.pickupDateTime);
+                        const dropOff = new Date(q.dropoffDateTime);
+                        const isPast = dropOff < new Date();
+                        const isActive = pickUp <= new Date() && dropOff >= new Date();
+                        const isUpcoming = pickUp > new Date();
+                        return (
+                          <div key={i} className={`flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 gap-4 ${isPast ? 'opacity-40' : ''}`}>
+                            <div className="flex items-center gap-4">
+                              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isActive ? 'bg-red-500' : isUpcoming ? 'bg-brand-orange' : 'bg-zinc-300'}`}></div>
+                              <div>
+                                <p className="font-bold text-brand-blue text-sm">{q.customerName}</p>
+                                <p className="text-xs text-zinc-400">{q.phone} • {q.reference}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-6 text-xs font-bold">
+                              <div>
+                                <p className="text-[10px] text-zinc-400 uppercase tracking-widest mb-0.5">Pick-up</p>
+                                <p className="text-brand-blue">{format(pickUp, 'dd MMM yyyy')}</p>
+                                <p className="text-zinc-400">{format(pickUp, 'HH:mm')}</p>
+                              </div>
+                              <ChevronRight size={16} className="text-zinc-300" />
+                              <div>
+                                <p className="text-[10px] text-zinc-400 uppercase tracking-widest mb-0.5">Drop-off</p>
+                                <p className="text-brand-blue">{format(dropOff, 'dd MMM yyyy')}</p>
+                                <p className="text-zinc-400">{format(dropOff, 'HH:mm')}</p>
+                              </div>
+                              <span className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-widest ${isActive ? 'bg-red-100 text-red-500' : isUpcoming ? 'bg-brand-orange/10 text-brand-orange' : 'bg-zinc-100 text-zinc-400'}`}>
+                                {isActive ? 'Active' : isUpcoming ? 'Upcoming' : 'Completed'}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="px-6 py-8 text-center">
+                      <p className="text-zinc-300 text-xs font-bold uppercase tracking-widest">No bookings for this vehicle</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Quotes Tab */}
+      {activeTab === 'quotes' && (
+        <div className="space-y-6">
+          {quotes.map(q => (
+            <div key={q.id} className="bg-white p-8 rounded-3xl border border-zinc-100 shadow-sm hover:shadow-md transition-all group">
+              <div className="flex flex-col md:flex-row justify-between gap-6">
+                <div className="flex-grow">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-xs font-mono font-bold text-brand-orange bg-brand-orange/5 px-4 py-1.5 rounded-full border border-brand-orange/10">{q.reference}</span>
+                    <span className="text-xs text-zinc-400 font-medium">{format(q.createdAt?.toDate() || new Date(), 'PPP p')}</span>
+                  </div>
+                  <h4 className="text-2xl font-display font-black text-brand-blue mb-4">{q.customerName}</h4>
+                  <div className="grid sm:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <p className="flex items-center gap-3 text-sm text-zinc-600 font-medium bg-zinc-50 p-2 rounded-lg border border-zinc-100"><Phone size={16} className="text-brand-orange" /> {q.phone}</p>
+                      <p className="flex items-center gap-3 text-sm text-zinc-600 font-medium bg-zinc-50 p-2 rounded-lg border border-zinc-100"><Mail size={16} className="text-brand-orange" /> {q.email}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-widest">Rental Route</p>
+                      <p className="text-sm font-semibold text-zinc-700">{q.pickupLocation} → {q.dropoffLocation}</p>
+                      <p className="text-xs text-zinc-400">{q.durationDays} Days Duration</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col justify-between items-end min-w-[200px]">
+                  <div className="text-right">
+                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Quote Total</p>
+                    <p className="text-3xl font-display font-black text-brand-blue">ZMW {q.total?.toLocaleString()}</p>
+                    <div className="mt-3 flex items-center justify-end gap-2">
+                      <CarIcon size={16} className="text-brand-orange" />
+                      <span className="text-sm font-bold text-brand-blue">{q.car?.name}</span>
+                    </div>
+                  </div>
+                  <button onClick={() => deleteDoc(doc(db, 'quotes', q.id))} className="text-zinc-300 hover:text-red-500 transition-colors mt-6 opacity-0 group-hover:opacity-100 text-xs font-bold uppercase tracking-widest">
+                    Delete Quote
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+          {quotes.length === 0 && (
+            <div className="text-center py-24 bg-zinc-50 rounded-[3rem] border border-dashed border-zinc-200">
+              <FileText size={48} className="mx-auto text-zinc-200 mb-4" />
+              <p className="text-zinc-400 font-medium">No customer quotes found in the database.</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+  const [cars, setCars] = useState<Car[]>([]);
+  const [quotes, setQuotes] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'fleet' | 'quotes' | 'availability'>('fleet');
+  const [editingCar, setEditingCar] = useState<Car | null>(null);
   const [newCar, setNewCar] = useState<Partial<Car>>({
     name: '', category: 'Economy', passengers: 5, luggage: 2,
     transmission: 'Automatic', pricePerDay: 800, image: '',
