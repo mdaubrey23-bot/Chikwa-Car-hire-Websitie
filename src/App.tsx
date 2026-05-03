@@ -1188,7 +1188,7 @@ const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (
                           Send your <span className="font-bold">proof of payment screenshot</span> to our WhatsApp along with your booking reference number.
                         </p>
                         
-                          href={`https://wa.me/260977515759?text=${encodeURIComponent(`Hello Chikwa Car Hire,\n\nI have made a payment for my car hire booking.\n\nPlease find my proof of payment attached.\n\nThank you.`)}`}
+                          href="https://wa.me/260977515759"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center justify-center gap-2 bg-[#25D366] text-white px-6 py-3 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-green-600 transition-all shadow-lg w-full"
