@@ -1126,26 +1126,97 @@ const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (
                 </div>
               </div>
 
-              {/* Pay Now / Pay Later */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* Payment Options */}
+              <div className="space-y-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Payment Option</p>
+
+                {/* Pay Now */}
                 <button type="button" onClick={() => setFormData(p => ({ ...p, payNow: true }))}
-                  className={`p-5 rounded-2xl border-2 text-left transition-all ${formData.payNow ? 'border-brand-blue bg-brand-blue text-white' : 'border-zinc-100 bg-white text-brand-blue hover:border-brand-blue/30'}`}>
-                  <div className={`w-5 h-5 rounded-full border-2 mb-3 flex items-center justify-center ${formData.payNow ? 'border-white bg-white' : 'border-zinc-300'}`}>
-                    {formData.payNow && <div className="w-2.5 h-2.5 rounded-full bg-brand-blue" />}
+                  className={`w-full p-5 rounded-2xl border-2 text-left transition-all ${formData.payNow ? 'border-brand-blue bg-brand-blue' : 'border-zinc-100 bg-white hover:border-brand-blue/30'}`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${formData.payNow ? 'border-white bg-white' : 'border-zinc-300'}`}>
+                        {formData.payNow && <div className="w-2.5 h-2.5 rounded-full bg-brand-blue" />}
+                      </div>
+                      <p className={`font-display font-black text-lg ${formData.payNow ? 'text-white' : 'text-brand-blue'}`}>Pay Now</p>
+                      <span className={`text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${formData.payNow ? 'bg-brand-orange text-white' : 'bg-brand-orange/10 text-brand-orange'}`}>Best Offer</span>
+                    </div>
+                    <p className={`text-2xl font-display font-black ${formData.payNow ? 'text-white' : 'text-brand-blue'}`}>ZMW {total.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                   </div>
-                  <p className={`font-display font-black text-lg ${formData.payNow ? 'text-white' : 'text-brand-blue'}`}>Pay Now</p>
-                  <span className={`text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${formData.payNow ? 'bg-brand-orange text-white' : 'bg-brand-orange/10 text-brand-orange'}`}>Best Offer</span>
-                  <p className={`text-2xl font-display font-black mt-2 ${formData.payNow ? 'text-white' : 'text-brand-blue'}`}>ZMW {total.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                  <p className={`text-xs mt-1 ${formData.payNow ? 'text-white/70' : 'text-zinc-400'}`}>Guaranteed lower rates!</p>
+                  <p className={`text-xs ${formData.payNow ? 'text-white/70' : 'text-zinc-400'}`}>Guaranteed lower rates! Pay via Mobile Money before pick-up.</p>
                 </button>
+
+                {/* Pay Now Details — shown when selected */}
+                <AnimatePresence>
+                  {formData.payNow && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="bg-green-50 border border-green-200 rounded-2xl p-5 space-y-4"
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                          <CheckCircle2 size={14} className="text-white" />
+                        </div>
+                        <p className="text-sm font-black text-green-700 uppercase tracking-widest">Payment Details</p>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-3">
+                        <div className="bg-white border border-green-100 rounded-xl p-4">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">Airtel Money</p>
+                          <p className="text-xl font-display font-black text-brand-blue">0978 XXX XXX</p>
+                          <p className="text-xs text-zinc-500 mt-1">Account Name: <span className="font-bold">Chikwa Car Hire Limited</span></p>
+                        </div>
+                        <div className="bg-white border border-green-100 rounded-xl p-4">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">MTN Money</p>
+                          <p className="text-xl font-display font-black text-brand-blue">0968 XXX XXX</p>
+                          <p className="text-xs text-zinc-500 mt-1">Account Name: <span className="font-bold">Chikwa Car Hire Limited</span></p>
+                        </div>
+                        <div className="bg-white border border-green-100 rounded-xl p-4">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2">Bank Transfer</p>
+                          <p className="text-base font-display font-black text-brand-blue">Atlas Mara Bank</p>
+                          <p className="text-xs text-zinc-500 mt-1">Acc: <span className="font-bold font-mono">0335952951018-ZMW</span></p>
+                          <p className="text-xs text-zinc-500">FNB Bank Acc: <span className="font-bold font-mono">62891674759</span></p>
+                          <p className="text-xs text-zinc-500 mt-1">Name: <span className="font-bold">Chikwa Car Hire Limited</span></p>
+                        </div>
+                      </div>
+
+                      <div className="bg-brand-orange/10 border border-brand-orange/20 rounded-xl p-4">
+                        <p className="text-xs font-black text-brand-orange uppercase tracking-widest mb-2">After Payment</p>
+                        <p className="text-sm text-zinc-600 leading-relaxed mb-3">
+                          Send your <span className="font-bold">proof of payment screenshot</span> to our WhatsApp along with your booking reference number.
+                        </p>
+                        
+                          href={`https://wa.me/260977515759?text=${encodeURIComponent(`Hello Chikwa Car Hire,\n\nI have made a payment for my car hire booking.\n\nPlease find my proof of payment attached.\n\nThank you.`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-2 bg-[#25D366] text-white px-6 py-3 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-green-600 transition-all shadow-lg w-full"
+                        >
+                          <MessageCircle size={16} />
+                          Send Proof of Payment on WhatsApp
+                        </a>
+                        <p className="text-[10px] text-zinc-400 text-center mt-2 font-medium">+260 977 515 759</p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Pay at Pick-up */}
                 <button type="button" onClick={() => setFormData(p => ({ ...p, payNow: false }))}
-                  className={`p-5 rounded-2xl border-2 text-left transition-all ${!formData.payNow ? 'border-brand-blue' : 'border-zinc-100 bg-white hover:border-brand-blue/30'}`}>
-                  <div className={`w-5 h-5 rounded-full border-2 mb-3 flex items-center justify-center ${!formData.payNow ? 'border-brand-blue' : 'border-zinc-300'}`}>
-                    {!formData.payNow && <div className="w-2.5 h-2.5 rounded-full bg-brand-blue" />}
+                  className={`w-full p-5 rounded-2xl border-2 text-left transition-all ${!formData.payNow ? 'border-brand-blue bg-brand-blue/5' : 'border-zinc-100 bg-white hover:border-brand-blue/30'}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${!formData.payNow ? 'border-brand-blue' : 'border-zinc-300'}`}>
+                        {!formData.payNow && <div className="w-2.5 h-2.5 rounded-full bg-brand-blue" />}
+                      </div>
+                      <div>
+                        <p className="font-display font-black text-lg text-brand-blue">Pay at Pick-up</p>
+                        <p className="text-xs text-zinc-400">Free cancellation 24h before pick-up</p>
+                      </div>
+                    </div>
+                    <p className="text-2xl font-display font-black text-brand-blue">ZMW {(total * 1.11).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                   </div>
-                  <p className="font-display font-black text-lg text-brand-blue">Pay at Pick-up</p>
-                  <p className="text-2xl font-display font-black mt-2 text-brand-blue">ZMW {(total * 1.11).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                  <p className="text-xs text-zinc-400 mt-1">Free cancellation 24h before pick-up</p>
                 </button>
               </div>
 
