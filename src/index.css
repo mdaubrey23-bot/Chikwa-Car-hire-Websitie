@@ -2,9 +2,9 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-blue: #2E3192;
-  --color-brand-orange: #F15A24;
-  --color-brand-gold: #F15A24; /* Mapping gold to orange for this theme */
+  --color-brand-blue: #1B2A6B;
+  --color-brand-orange: #E8481C;
+  --color-brand-gold: #E8481C;
   --color-brand-cream: #FFF9E3;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Montserrat", sans-serif;
@@ -17,8 +17,70 @@
 }
 
 .quote-print-card {
-  @apply bg-white p-8 border border-zinc-200 rounded-xl;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+  background: #ffffff;
+  padding: 3rem;
+  border: 1px solid #e4e4e7;
+  border-radius: 1.5rem;
+  position: relative;
+  box-shadow: 
+    0 0 0 1px rgba(27, 42, 107, 0.03),
+    0 20px 60px rgba(27, 42, 107, 0.06),
+    0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.quote-print-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #1B2A6B 0%, #E8481C 100%);
+  border-radius: 1.5rem 1.5rem 0 0;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f4f4f5; }
+::-webkit-scrollbar-thumb { background: #1B2A6B; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #E8481C; }
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+.card-hover {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 48px rgba(27, 42, 107, 0.12);
+}
+
+.badge-paid {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+.badge-unpaid {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 20s linear infinite;
+  display: flex;
+  width: max-content;
+}
+
+.section-divider {
+  width: 48px;
+  height: 3px;
+  background: linear-gradient(90deg, #E8481C, #1B2A6B);
+  border-radius: 2px;
 }
 
 @media print {

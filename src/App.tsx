@@ -390,10 +390,11 @@ const Hero = ({ onGetQuote }: { onGetQuote: () => void }) => {
       <div className="absolute bottom-0 left-0 w-full bg-white/5 backdrop-blur-md border-t border-white/10 py-6 overflow-hidden hidden md:block">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
           <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-orange whitespace-nowrap mr-12">Trusted by:</span>
-          <div className="flex items-center space-x-16 animate-pulse">
-            {['ZAMBIA AIR FORCE', 'ZAMBIA ARMY', 'JICA', 'UNICEF', 'MINISTRY OF HEALTH'].map((name) => (
-              <span key={name} className="text-white/40 text-xs font-black tracking-widest whitespace-nowrap">{name}</span>
-            ))}
+          <div className="flex items-center space-x-16 overflow-hidden flex-1">
+            {[...['ZAMBIA AIR FORCE', 'ZAMBIA ARMY', 'JICA', 'UNICEF', 'MINISTRY OF HEALTH'],
+  ...['ZAMBIA AIR FORCE', 'ZAMBIA ARMY', 'JICA', 'UNICEF', 'MINISTRY OF HEALTH']].map((name, i) => (
+  <span key={i} className="animate-marquee text-white/40 text-xs font-black tracking-widest whitespace-nowrap mx-10">{name}</span>
+))}
           </div>
         </div>
       </div>
@@ -515,7 +516,7 @@ const FleetGrid = ({ onBookCar }: { onBookCar: (car: Car) => void }) => {
             transition={{ delay: index * 0.05 }}
             className="group"
           >
-            <div className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-zinc-100 group-hover:shadow-2xl transition-all h-full flex flex-col">
+            <div className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-zinc-100 card-hover h-full flex flex-col">
               <div className="h-64 overflow-hidden relative">
                 <img 
                   src={car.image} 
@@ -869,7 +870,7 @@ const InvoiceResult = ({ invoice, onPay }: { invoice: InvoiceData, onPay: (metho
             <h2 className="text-5xl font-display font-black uppercase tracking-tighter text-brand-blue">Invoice</h2>
             <p className="text-zinc-500 font-mono text-sm mt-2">#{invoice.invoiceNumber}</p>
           </div>
-          <div className={`px-6 py-2 rounded-full font-bold uppercase tracking-widest text-xs ${invoice.status === 'PAID' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+          <div className={`px-6 py-2 rounded-full font-bold uppercase tracking-widest text-xs ${invoice.status === 'PAID' ? 'badge-paid' : 'badge-unpaid'}`}>
             {invoice.status}
           </div>
         </div>
