@@ -563,7 +563,6 @@ const AdminDashboard = () => {
     </div>
   );
 };
-  
 
 const Navbar = ({ currentPage, onPageChange, user, onLogout }: { currentPage: Page, onPageChange: (p: Page) => void, user: FirebaseUser | null, onLogout: () => void }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -1278,288 +1277,7 @@ const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (
     </div>
   );
 };
-  const [formData, setFormData] = useState({
-    customerName: '',
-    phone: '',
-    email: '',
-    pickupLocation: 'Lusaka International Airport (LUN)',
-    dropoffLocation: 'Lusaka City Centre',
-    pickupDateTime: format(addDays(new Date(), 1), "yyyy-MM-dd'T'10:00"),
-    dropoffDateTime: format(addDays(new Date(), 3), "yyyy-MM-dd'T'10:00"),
-    carId: initialCar?.id || FLEET[0].id,
-    extraDriver: false,
-    extraInsurance: false,
-    extraChildSeat: false,
-  });
-
-  const [availabilityStatus, setAvailabilityStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle');
-  const [checkedDates, setCheckedDates] = useState<{ pickup: string; dropoff: string } | null>(null);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target as HTMLInputElement;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
-    }));
-    // Reset availability when dates or car changes
-    if (['pickupDateTime', 'dropoffDateTime', 'carId'].includes(name)) {
-      setAvailabilityStatus('idle');
-      setCheckedDates(null);
-    }
-  };
-
-  const checkAvailability = async () => {
-    if (!formData.pickupDateTime || !formData.dropoffDateTime) return;
-    setAvailabilityStatus('checking');
-    const pickupDate = new Date(formData.pickupDateTime);
-    const dropoffDate = new Date(formData.dropoffDateTime);
-    try {
-      const snapshot = await getDocs(query(collection(db, 'quotes')));
-      const existing = snapshot.docs.map(d => d.data());
-      const hasConflict = existing.some((q: any) => {
-        if (q.car?.id !== formData.carId) return false;
-        const qIn = new Date(q.pickupDateTime);
-        const qOut = new Date(q.dropoffDateTime);
-        return pickupDate < qOut && dropoffDate > qIn;
-      });
-      setAvailabilityStatus(hasConflict ? 'unavailable' : 'available');
-      setCheckedDates({
-        pickup: format(pickupDate, 'dd MMM yyyy, HH:mm'),
-        dropoff: format(dropoffDate, 'dd MMM yyyy, HH:mm'),
-      });
-    } catch (e) {
-      console.error(e);
-      setAvailabilityStatus('idle');
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
-
-  const selectedCar = FLEET.find(c => c.id === formData.carId);
-  const days = Math.max(1, differenceInDays(new Date(formData.dropoffDateTime), new Date(formData.pickupDateTime)));
-
-  return (
-    <div className="bg-white p-8 md:p-12 rounded-3xl shadow-2xl border border-zinc-100 max-w-4xl mx-auto">
-
-      {/* Availability Checker Strip */}
-      <div className="mb-10 bg-zinc-50 border border-zinc-100 rounded-2xl p-6">
-        <div className="flex flex-col md:flex-row gap-4 items-end">
-          <div className="flex-1 space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Vehicle</label>
-            <select
-              name="carId"
-              value={formData.carId}
-              onChange={handleChange}
-              className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-orange text-brand-blue font-bold text-sm"
-            >
-              {FLEET.map(car => (
-                <option key={car.id} value={car.id}>{car.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex-1 space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Pick-up Date & Time</label>
-            <input
-              name="pickupDateTime"
-              type="datetime-local"
-              value={formData.pickupDateTime}
-              onChange={handleChange}
-              className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-orange text-brand-blue font-medium text-sm"
-            />
-          </div>
-          <div className="flex-1 space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Return Date & Time</label>
-            <input
-              name="dropoffDateTime"
-              type="datetime-local"
-              value={formData.dropoffDateTime}
-              onChange={handleChange}
-              className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-orange text-brand-blue font-medium text-sm"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={checkAvailability}
-            disabled={availabilityStatus === 'checking'}
-            className="whitespace-nowrap bg-brand-blue text-white px-8 py-3 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-brand-orange transition-all shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {availabilityStatus === 'checking' ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Checking...
-              </>
-            ) : (
-              <>
-                <Calendar size={14} />
-                Check Availability
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Result Banner */}
-        <AnimatePresence>
-          {availabilityStatus === 'available' && checkedDates && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="mt-4 bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-4"
-            >
-              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                <CheckCircle2 size={16} className="text-white" />
-              </div>
-              <div className="flex-grow">
-                <p className="font-bold text-green-700 text-sm uppercase tracking-widest">Vehicle Available!</p>
-                <p className="text-green-600 text-xs mt-1">
-                  <span className="font-bold">{selectedCar?.name}</span> is free from <span className="font-bold">{checkedDates.pickup}</span> to <span className="font-bold">{checkedDates.dropoff}</span> ({days} day{days > 1 ? 's' : ''})
-                </p>
-              </div>
-              <div className="text-right flex-shrink-0">
-                <p className="text-[10px] text-green-500 font-bold uppercase tracking-widest">Est. Total</p>
-                <p className="text-green-700 font-display font-black text-lg">ZMW {((selectedCar?.pricePerDay || 0) * days).toLocaleString()}</p>
-              </div>
-            </motion.div>
-          )}
-          {availabilityStatus === 'unavailable' && checkedDates && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              className="mt-4 bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-4"
-            >
-              <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
-                <X size={16} className="text-white" />
-              </div>
-              <div>
-                <p className="font-bold text-red-600 text-sm uppercase tracking-widest">Not Available</p>
-                <p className="text-red-500 text-xs mt-1">
-                  <span className="font-bold">{selectedCar?.name}</span> is already booked between <span className="font-bold">{checkedDates.pickup}</span> and <span className="font-bold">{checkedDates.dropoff}</span>. Please choose different dates or another vehicle.
-                </p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="space-y-4">
-            <label className="block text-xs font-bold uppercase tracking-widest text-zinc-400">Full Name</label>
-            <input 
-              required
-              name="customerName"
-              value={formData.customerName}
-              onChange={handleChange}
-              type="text" 
-              className="w-full bg-zinc-50 border-none rounded-xl px-4 py-4 focus:ring-2 focus:ring-brand-gold outline-none text-brand-blue font-medium shadow-inner" 
-              placeholder="e.g. John Doe" 
-            />
-          </div>
-          <div className="space-y-4">
-            <label className="block text-xs font-bold uppercase tracking-widest text-zinc-400">Phone & Email</label>
-            <div className="flex space-x-2">
-              <input 
-                required
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                type="tel" 
-                className="w-1/2 bg-zinc-50 border-none rounded-xl px-4 py-4 focus:ring-2 focus:ring-brand-gold outline-none text-brand-blue font-medium shadow-inner" 
-                placeholder="+260..." 
-              />
-              <input 
-                required
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                type="email" 
-                className="w-1/2 bg-zinc-50 border-none rounded-xl px-4 py-4 focus:ring-2 focus:ring-brand-gold outline-none text-brand-blue font-medium shadow-inner" 
-                placeholder="mail@example.com" 
-              />
-            </div>
-          </div>
-          <div className="space-y-4">
-            <label className="block text-xs font-bold uppercase tracking-widest text-zinc-400">Pick-up Location</label>
-            <input 
-              name="pickupLocation"
-              value={formData.pickupLocation}
-              onChange={handleChange}
-              type="text" 
-              className="w-full bg-zinc-50 border-none rounded-xl px-4 py-4 focus:ring-2 focus:ring-brand-gold outline-none text-brand-blue font-medium shadow-inner" 
-            />
-          </div>
-          <div className="space-y-4">
-            <label className="block text-xs font-bold uppercase tracking-widest text-zinc-400">Drop-off Location</label>
-            <input 
-              name="dropoffLocation"
-              value={formData.dropoffLocation}
-              onChange={handleChange}
-              type="text" 
-              className="w-full bg-zinc-50 border-none rounded-xl px-4 py-4 focus:ring-2 focus:ring-brand-gold outline-none text-brand-blue font-medium shadow-inner" 
-            />
-          </div>
-          <div className="space-y-4">
-            <label className="block text-xs font-bold uppercase tracking-widest text-zinc-400">Pick-up Date & Time</label>
-            <input 
-              required
-              name="pickupDateTime"
-              value={formData.pickupDateTime}
-              onChange={handleChange}
-              type="datetime-local" 
-              className="w-full bg-zinc-50 border-none rounded-xl px-4 py-4 focus:ring-2 focus:ring-brand-gold outline-none text-brand-blue font-medium shadow-inner" 
-            />
-          </div>
-          <div className="space-y-4">
-            <label className="block text-xs font-bold uppercase tracking-widest text-zinc-400">Drop-off Date & Time</label>
-            <input 
-              required
-              name="dropoffDateTime"
-              value={formData.dropoffDateTime}
-              onChange={handleChange}
-              type="datetime-local" 
-              className="w-full bg-zinc-50 border-none rounded-xl px-4 py-4 focus:ring-2 focus:ring-brand-gold outline-none text-brand-blue font-medium shadow-inner" 
-            />
-          </div>
-          <div className="space-y-4">
-            <label className="block text-xs font-bold uppercase tracking-widest text-zinc-400">Vehicle Selected</label>
-            <div className="w-full bg-zinc-50 border-none rounded-xl px-4 py-4 text-brand-blue font-bold shadow-inner flex items-center gap-3">
-              <CarIcon size={16} className="text-brand-orange flex-shrink-0" />
-              <span>{selectedCar?.name || 'Select a vehicle above'}</span>
-              <span className="ml-auto text-xs text-zinc-400 font-medium">ZMW {selectedCar?.pricePerDay?.toLocaleString()}/day</span>
-            </div>
-          </div>
-          <div className="space-y-4 flex flex-col justify-center">
-            <label className="block text-xs font-bold uppercase tracking-widest text-zinc-400 mb-2">Extra Options</label>
-            <div className="grid grid-cols-2 gap-4">
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input type="checkbox" name="extraDriver" checked={formData.extraDriver} onChange={handleChange} className="w-5 h-5 rounded border-zinc-300 text-brand-gold focus:ring-brand-gold" />
-                <span className="text-sm font-medium text-brand-blue">Driver</span>
-              </label>
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input type="checkbox" name="extraInsurance" checked={formData.extraInsurance} onChange={handleChange} className="w-5 h-5 rounded border-zinc-300 text-brand-gold focus:ring-brand-gold" />
-                <span className="text-sm font-medium text-brand-blue">Insurance</span>
-              </label>
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <input type="checkbox" name="extraChildSeat" checked={formData.extraChildSeat} onChange={handleChange} className="w-5 h-5 rounded border-zinc-300 text-brand-gold focus:ring-brand-gold" />
-                <span className="text-sm font-medium text-brand-blue">Child Seat</span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <button 
-          type="submit"
-          className="w-full bg-brand-blue text-brand-gold py-6 rounded-2xl font-display font-extrabold uppercase tracking-[0.2em] text-xl shadow-xl hover:bg-brand-gold hover:text-brand-blue transition-all active:scale-[0.98]"
-        >
-          Generate Instant Quote
-        </button>
-      </form>
-    </div>
-  );
+  
 
 
 const QuoteResult = ({ quote, onConvert }: { quote: QuoteData, onConvert: () => void }) => {
@@ -2071,23 +1789,27 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentPage]);
 
-  const generateQuote = (formData: any) => {
+  const generateQuote = async (formData: any) => {
     const car = cars.find(c => c.id === formData.carId) || cars[0];
     const days = Math.max(1, differenceInDays(new Date(formData.dropoffDateTime), new Date(formData.pickupDateTime)));
-
-    // Overbooking prevention check
-    const allQuotes = JSON.parse(sessionStorage.getItem('quotes_cache') || '[]');
     const pickupDate = new Date(formData.pickupDateTime);
     const dropoffDate = new Date(formData.dropoffDateTime);
-    const hasConflict = allQuotes.some((q: any) => {
-      if (q.car?.id !== formData.carId) return false;
-      const qIn = new Date(q.pickupDateTime);
-      const qOut = new Date(q.dropoffDateTime);
-      return pickupDate < qOut && dropoffDate > qIn;
-    });
-    if (hasConflict) {
-      alert(`Sorry — ${car.name} is already booked during those dates. Please choose different dates or another vehicle.`);
-      return;
+
+    try {
+      const snapshot = await getDocs(query(collection(db, 'quotes')));
+      const existing = snapshot.docs.map(d => d.data());
+      const hasConflict = existing.some((q: any) => {
+        if (q.car?.id !== formData.carId) return false;
+        const qIn = new Date(q.pickupDateTime);
+        const qOut = new Date(q.dropoffDateTime);
+        return pickupDate < qOut && dropoffDate > qIn;
+      });
+      if (hasConflict) {
+        alert(`Sorry — ${car.name} is already booked for those dates. Please choose different dates or another vehicle.`);
+        return;
+      }
+    } catch (e) {
+      console.error('Booking check failed:', e);
     }
     
     // Simple cost calculation
@@ -2132,9 +1854,7 @@ export default function App() {
         ...quote,
         createdAt: serverTimestamp(),
       });
-      // Cache for overbooking check
-      const existing = JSON.parse(sessionStorage.getItem('quotes_cache') || '[]');
-      sessionStorage.setItem('quotes_cache', JSON.stringify([...existing, quote]));
+      // Quote saved successfully
     } catch (e) { console.error("Error saving quote:", e); }
 
     setCurrentQuote(quote);
