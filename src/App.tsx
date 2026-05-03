@@ -1560,7 +1560,7 @@ const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (
       </form>
     </div>
   );
-};
+
 
 const QuoteResult = ({ quote, onConvert }: { quote: QuoteData, onConvert: () => void }) => {
   return (
