@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-brand-blue: #2E3192;
+  --color-brand-orange: #F15A24;
+  --color-brand-gold: #F15A24; /* Mapping gold to orange for this theme */
+  --color-brand-cream: #FFF9E3;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Montserrat", sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-white text-zinc-900 antialiased;
+  }
+}
+
+.quote-print-card {
+  @apply bg-white p-8 border border-zinc-200 rounded-xl;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}
+

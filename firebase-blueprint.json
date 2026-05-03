@@ -1,0 +1,53 @@
+{
+  "entities": {
+    "Car": {
+      "title": "Car",
+      "description": "Vehicle available for rent",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string", "enum": ["Economy", "SUV", "Luxury", "Van", "Truck"] },
+        "passengers": { "type": "number" },
+        "luggage": { "type": "number" },
+        "transmission": { "type": "string", "enum": ["Automatic", "Manual"] },
+        "pricePerDay": { "type": "number" },
+        "image": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "category", "passengers", "luggage", "transmission", "pricePerDay", "image"]
+    },
+    "Quote": {
+      "title": "Quote",
+      "description": "Rental quote generated for a customer",
+      "type": "object",
+      "properties": {
+        "reference": { "type": "string" },
+        "customerName": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "pickupLocation": { "type": "string" },
+        "dropoffLocation": { "type": "string" },
+        "pickupDateTime": { "type": "string" },
+        "dropoffDateTime": { "type": "string" },
+        "carId": { "type": "string" },
+        "total": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/cars/{carId}": {
+      "schema": "Car",
+      "description": "Collection of all cars in the fleet"
+    },
+    "/quotes/{quoteId}": {
+      "schema": "Quote",
+      "description": "Collection of all generated quotes"
+    },
+    "/admins/{adminId}": {
+      "schema": "object",
+      "description": "List of authorized admin UIDs"
+    }
+  }
+}
