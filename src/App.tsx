@@ -267,9 +267,7 @@ const Navbar = ({ currentPage, onPageChange, user }: { currentPage: Page, onPage
     { label: 'Get Quote', page: Page.QUOTE },
   ];
 
-  if (user) {
-    navItems.push({ label: 'Admin', page: Page.ADMIN });
-  }
+  navItems.push({ label: 'Admin', page: Page.ADMIN });
 
   return (
     <nav className="fixed top-0 left-0 w-full z-50 bg-brand-blue/95 backdrop-blur-md text-white border-b border-brand-orange/20 no-print">
@@ -302,6 +300,17 @@ const Navbar = ({ currentPage, onPageChange, user }: { currentPage: Page, onPage
             >
               Get a Quote
             </button>
+            {user && (
+              <div className="flex items-center gap-3 ml-4 pl-4 border-l border-white/10">
+                <img src={user.photoURL || ''} className="w-8 h-8 rounded-full border-2 border-brand-orange" />
+                <button
+                  onClick={() => signOut(auth)}
+                  className="text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-brand-orange transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -1367,6 +1376,14 @@ export default function App() {
               <span className="text-brand-gold font-display font-bold uppercase tracking-[0.3em] text-xs mb-4 block">The Fleet</span>
               <h2 className="text-5xl font-display font-black text-brand-blue mb-6">Our Exceptional Cars</h2>
               <div className="w-16 h-1 bg-brand-gold mx-auto"></div>
+              {user && (
+                <button
+                  onClick={() => setCurrentPage(Page.ADMIN)}
+                  className="mt-8 inline-flex items-center gap-2 bg-brand-blue text-white px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs hover:bg-brand-orange transition-all shadow-lg"
+                >
+                  <Settings size={14} /> Manage Fleet
+                </button>
+              )}
             </motion.div>
             <FleetGrid onBookCar={(car) => { setSelectedCarForQuote(car); setCurrentPage(Page.QUOTE); }} />
           </section>
@@ -1405,14 +1422,27 @@ export default function App() {
         );
       case Page.ADMIN:
         return user ? <AdminDashboard /> : (
-          <div className="py-40 flex flex-col items-center justify-center">
-            <h2 className="text-2xl font-bold text-brand-blue mb-6">Owner Access Only</h2>
-            <button 
-              onClick={() => signInWithPopup(auth, new GoogleAuthProvider())}
-              className="bg-brand-blue text-white px-8 py-4 rounded-xl font-bold uppercase tracking-widest"
-            >
-              Sign In with Google
-            </button>
+          <div className="py-40 flex flex-col items-center justify-center px-4">
+            <div className="bg-white border border-zinc-100 shadow-2xl rounded-3xl p-12 max-w-md w-full text-center">
+              <div className="w-20 h-20 bg-brand-blue rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-lg">
+                <CarIcon size={36} className="text-brand-orange" />
+              </div>
+              <h2 className="text-3xl font-display font-black text-brand-blue uppercase tracking-tight mb-2">Owner Portal</h2>
+              <p className="text-zinc-400 font-light mb-10 text-sm">Sign in with your authorised Google account to manage your fleet and view customer quotes.</p>
+              <button 
+                onClick={() => signInWithPopup(auth, new GoogleAuthProvider())}
+                className="w-full bg-brand-blue text-white py-5 rounded-2xl font-display font-bold uppercase tracking-widest hover:bg-brand-orange transition-all shadow-xl flex items-center justify-center gap-3 group"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Sign In with Google
+              </button>
+              <p className="text-zinc-300 text-[10px] font-bold uppercase tracking-widest mt-8">Authorised personnel only</p>
+            </div>
           </div>
         );
       default:
