@@ -25,6 +25,7 @@ import {
   Briefcase,
   Settings,
   Calendar,
+  Clock,
   CheckCircle2,
   Download,
   FileText,
@@ -1008,22 +1009,103 @@ const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (
                       <p className="text-2xl font-display font-black text-brand-blue">ZMW {selectedCar?.pricePerDay?.toLocaleString()} <span className="text-sm font-normal text-zinc-400">/ per day</span></p>
                     </div>
                   </div>
-                  <div className="border-l border-zinc-200 pl-6 space-y-3 min-w-[180px]">
+                  <div className="border-l border-zinc-200 pl-6 space-y-3 min-w-[200px]">
                     <div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-brand-orange mb-1">Pickup</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-brand-orange mb-1">Pickup Location</p>
                       <input name="pickupLocation" value={formData.pickupLocation} onChange={handleChange} className="text-sm font-bold text-brand-blue bg-transparent border-none outline-none w-full" />
-                      <input name="pickupDateTime" type="datetime-local" value={formData.pickupDateTime} onChange={handleChange} className="text-xs text-zinc-400 bg-transparent border-none outline-none w-full mt-1" />
                     </div>
                     <div className="border-t border-zinc-100 pt-3">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1">Return</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1">Return Location</p>
                       <input name="dropoffLocation" value={formData.dropoffLocation} onChange={handleChange} className="text-sm font-bold text-brand-blue bg-transparent border-none outline-none w-full" />
-                      <input name="dropoffDateTime" type="datetime-local" value={formData.dropoffDateTime} onChange={handleChange} className="text-xs text-zinc-400 bg-transparent border-none outline-none w-full mt-1" />
                     </div>
                   </div>
                 </div>
 
+                {/* Date & Time Pickers */}
+                <div className="mt-6 pt-5 border-t border-zinc-200">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-4">Select Your Rental Dates</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="bg-white border-2 border-zinc-100 rounded-xl p-4 hover:border-brand-orange transition-all">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-full bg-brand-orange flex items-center justify-center flex-shrink-0">
+                          <MapPin size={12} className="text-white" />
+                        </div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-brand-orange">Pick-up</p>
+                      </div>
+                      <input
+                        name="pickupDateTime"
+                        type="date"
+                        value={formData.pickupDateTime.split('T')[0]}
+                        onChange={e => {
+                          const time = formData.pickupDateTime.split('T')[1] || '10:00';
+                          handleChange({ target: { name: 'pickupDateTime', value: `${e.target.value}T${time}`, type: 'text' } } as any);
+                        }}
+                        className="w-full text-brand-blue font-bold text-base outline-none border-none bg-transparent mb-2"
+                      />
+                      <div className="flex items-center gap-2">
+                        <Clock size={12} className="text-zinc-400" />
+                        <input
+                          name="pickupTime"
+                          type="time"
+                          value={formData.pickupDateTime.split('T')[1] || '10:00'}
+                          onChange={e => {
+                            const date = formData.pickupDateTime.split('T')[0];
+                            handleChange({ target: { name: 'pickupDateTime', value: `${date}T${e.target.value}`, type: 'text' } } as any);
+                          }}
+                          className="text-zinc-500 text-sm outline-none border-none bg-transparent"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="bg-white border-2 border-zinc-100 rounded-xl p-4 hover:border-brand-blue transition-all">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-full bg-brand-blue flex items-center justify-center flex-shrink-0">
+                          <MapPin size={12} className="text-white" />
+                        </div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-brand-blue">Return</p>
+                      </div>
+                      <input
+                        name="dropoffDateTime"
+                        type="date"
+                        value={formData.dropoffDateTime.split('T')[0]}
+                        onChange={e => {
+                          const time = formData.dropoffDateTime.split('T')[1] || '10:00';
+                          handleChange({ target: { name: 'dropoffDateTime', value: `${e.target.value}T${time}`, type: 'text' } } as any);
+                        }}
+                        className="w-full text-brand-blue font-bold text-base outline-none border-none bg-transparent mb-2"
+                      />
+                      <div className="flex items-center gap-2">
+                        <Clock size={12} className="text-zinc-400" />
+                        <input
+                          name="dropoffTime"
+                          type="time"
+                          value={formData.dropoffDateTime.split('T')[1] || '10:00'}
+                          onChange={e => {
+                            const date = formData.dropoffDateTime.split('T')[0];
+                            handleChange({ target: { name: 'dropoffDateTime', value: `${date}T${e.target.value}`, type: 'text' } } as any);
+                          }}
+                          className="text-zinc-500 text-sm outline-none border-none bg-transparent"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Duration summary */}
+                  <div className="bg-brand-blue/5 border border-brand-blue/10 rounded-xl px-4 py-3 flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Calendar size={14} className="text-brand-blue" />
+                      <span className="text-xs font-bold text-brand-blue uppercase tracking-widest">
+                        {days} Day{days > 1 ? 's' : ''} Rental
+                      </span>
+                    </div>
+                    <span className="text-xs font-bold text-brand-orange">
+                      ZMW {((selectedCar?.pricePerDay || 0) * days).toLocaleString()} base total
+                    </span>
+                  </div>
+                </div>
+
                 {/* Availability Check */}
-                <div className="mt-4 pt-4 border-t border-zinc-200 flex items-center gap-3">
+                <div className="flex items-center gap-3">
                   <button type="button" onClick={checkAvailability} disabled={availabilityStatus === 'checking'}
                     className="flex items-center gap-2 bg-brand-blue text-white px-6 py-2.5 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-brand-orange transition-all disabled:opacity-60"
                   >
@@ -1202,7 +1284,7 @@ const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (
 
         {/* Right Sidebar — Sticky Total */}
         <div className="lg:col-span-1">
-          <div className="bg-white border border-zinc-100 rounded-2xl p-6 shadow-lg sticky top-28 space-y-4">
+          <div className="bg-white border border-zinc-100 rounded-2xl p-6 shadow-lg lg:sticky lg:top-28 space-y-4">
             <h3 className="font-display font-black text-brand-blue uppercase text-sm tracking-widest border-b border-zinc-50 pb-4">Price Details</h3>
 
             <div className="space-y-3 text-sm">
