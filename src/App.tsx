@@ -1199,7 +1199,7 @@ const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (
                       </div>
                     </motion.div>
                   )}
-                </AnimatePresence>
+                </AnimatePresence> 
 
                 {/* Pay at Pick-up */}
                 <button type="button" onClick={() => setFormData(p => ({ ...p, payNow: false }))}
