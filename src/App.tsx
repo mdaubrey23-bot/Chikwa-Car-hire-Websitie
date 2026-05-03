@@ -1191,7 +1191,8 @@ const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (
                           href="https://wa.me/260977515759"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-2 bg-[#25D366] text-white px-6 py-3 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-green-600 transition-all shadow-lg w-full"
+                          style={{ backgroundColor: '#25D366' }}
+                          className="flex items-center justify-center gap-2 text-white px-6 py-3 rounded-xl font-bold uppercase tracking-widest text-xs transition-all shadow-lg w-full"
                         >
                           <MessageCircle size={16} />
                           Send Proof of Payment on WhatsApp
