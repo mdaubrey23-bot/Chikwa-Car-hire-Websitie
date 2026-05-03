@@ -882,6 +882,402 @@ const FleetGrid = ({ onBookCar }: { onBookCar: (car: Car) => void }) => {
 };
 
 const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (data: any) => void }) => {
+  const [step, setStep] = useState(1);
+  const [formData, setFormData] = useState({
+    customerName: '',
+    lastName: '',
+    dateOfBirth: '',
+    phone: '',
+    email: '',
+    address: '',
+    country: 'Zambia',
+    city: 'Lusaka',
+    comments: '',
+    pickupLocation: 'Lusaka International Airport (LUN)',
+    dropoffLocation: 'Lusaka City Centre',
+    pickupDateTime: format(addDays(new Date(), 1), "yyyy-MM-dd'T'10:00"),
+    dropoffDateTime: format(addDays(new Date(), 3), "yyyy-MM-dd'T'10:00"),
+    carId: initialCar?.id || FLEET[0].id,
+    extraDriver: false,
+    extraInsurance: false,
+    extraChildSeat: false,
+    payNow: true,
+  });
+
+  const [availabilityStatus, setAvailabilityStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle');
+  const [checkedDates, setCheckedDates] = useState<{ pickup: string; dropoff: string } | null>(null);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target as HTMLInputElement;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+    }));
+    if (['pickupDateTime', 'dropoffDateTime', 'carId'].includes(name)) {
+      setAvailabilityStatus('idle');
+      setCheckedDates(null);
+    }
+  };
+
+  const checkAvailability = async () => {
+    if (!formData.pickupDateTime || !formData.dropoffDateTime) return;
+    setAvailabilityStatus('checking');
+    const pickupDate = new Date(formData.pickupDateTime);
+    const dropoffDate = new Date(formData.dropoffDateTime);
+    try {
+      const snapshot = await getDocs(query(collection(db, 'quotes')));
+      const existing = snapshot.docs.map(d => d.data());
+      const hasConflict = existing.some((q: any) => {
+        if (q.car?.id !== formData.carId) return false;
+        const qIn = new Date(q.pickupDateTime);
+        const qOut = new Date(q.dropoffDateTime);
+        return pickupDate < qOut && dropoffDate > qIn;
+      });
+      setAvailabilityStatus(hasConflict ? 'unavailable' : 'available');
+      setCheckedDates({
+        pickup: format(pickupDate, 'dd MMM yyyy, HH:mm'),
+        dropoff: format(dropoffDate, 'dd MMM yyyy, HH:mm'),
+      });
+    } catch (e) {
+      console.error(e);
+      setAvailabilityStatus('idle');
+    }
+  };
+
+  const handleSubmit = () => {
+    onSubmit({ ...formData, customerName: `${formData.customerName} ${formData.lastName}`.trim() });
+  };
+
+  const selectedCar = FLEET.find(c => c.id === formData.carId);
+  const days = Math.max(1, differenceInDays(new Date(formData.dropoffDateTime), new Date(formData.pickupDateTime)));
+  const baseTotal = (selectedCar?.pricePerDay || 0) * days;
+  const extras = (formData.extraDriver ? 250 * days : 0) + (formData.extraInsurance ? 150 * days : 0) + (formData.extraChildSeat ? 75 * days : 0);
+  const subtotal = baseTotal + extras;
+  const total = subtotal * (1 + 0.16);
+
+  const steps = [
+    { num: 1, label: 'Selection & Driver Details' },
+    { num: 2, label: 'Insurance' },
+    { num: 3, label: 'Add-ons' },
+  ];
+
+  return (
+    <div className="max-w-5xl mx-auto">
+
+      {/* Step Progress Bar */}
+      <div className="flex items-center gap-3 mb-10">
+        {steps.map((s, i) => (
+          <React.Fragment key={s.num}>
+            <button
+              onClick={() => s.num < step && setStep(s.num)}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-xs uppercase tracking-widest transition-all ${
+                step === s.num
+                  ? 'bg-brand-blue text-white shadow-lg'
+                  : step > s.num
+                  ? 'bg-green-100 text-green-600 cursor-pointer hover:bg-green-200'
+                  : 'bg-zinc-100 text-zinc-400 cursor-default'
+              }`}
+            >
+              {step > s.num ? <CheckCircle2 size={14} /> : <span className="w-4 h-4 rounded-full border-2 border-current flex items-center justify-center text-[10px]">{s.num}</span>}
+              {s.label}
+            </button>
+            {i < steps.length - 1 && <div className={`flex-1 h-0.5 rounded-full ${step > s.num ? 'bg-green-300' : 'bg-zinc-100'}`} />}
+          </React.Fragment>
+        ))}
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-8">
+
+        {/* Main Form Area */}
+        <div className="lg:col-span-2 space-y-6">
+
+          {/* STEP 1 */}
+          {step === 1 && (
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+              <h2 className="text-3xl font-display font-black text-brand-blue uppercase">Step 1. Selection & Driver Details</h2>
+
+              {/* Vehicle Card */}
+              <div className="bg-zinc-50 border border-zinc-100 rounded-2xl p-6">
+                <div className="flex flex-col md:flex-row gap-6">
+                  <div className="flex gap-4 flex-1">
+                    <img src={selectedCar?.image} className="w-32 h-24 object-cover rounded-xl flex-shrink-0" />
+                    <div>
+                      <select name="carId" value={formData.carId} onChange={handleChange} className="font-display font-black text-brand-blue text-lg uppercase bg-transparent border-none outline-none mb-1 cursor-pointer">
+                        {FLEET.map(car => <option key={car.id} value={car.id}>{car.name}</option>)}
+                      </select>
+                      <p className="text-zinc-400 text-sm mb-3">{selectedCar?.category} · {selectedCar?.passengers} seats · {selectedCar?.transmission}</p>
+                      <p className="text-2xl font-display font-black text-brand-blue">ZMW {selectedCar?.pricePerDay?.toLocaleString()} <span className="text-sm font-normal text-zinc-400">/ per day</span></p>
+                    </div>
+                  </div>
+                  <div className="border-l border-zinc-200 pl-6 space-y-3 min-w-[180px]">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-brand-orange mb-1">Pickup</p>
+                      <input name="pickupLocation" value={formData.pickupLocation} onChange={handleChange} className="text-sm font-bold text-brand-blue bg-transparent border-none outline-none w-full" />
+                      <input name="pickupDateTime" type="datetime-local" value={formData.pickupDateTime} onChange={handleChange} className="text-xs text-zinc-400 bg-transparent border-none outline-none w-full mt-1" />
+                    </div>
+                    <div className="border-t border-zinc-100 pt-3">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1">Return</p>
+                      <input name="dropoffLocation" value={formData.dropoffLocation} onChange={handleChange} className="text-sm font-bold text-brand-blue bg-transparent border-none outline-none w-full" />
+                      <input name="dropoffDateTime" type="datetime-local" value={formData.dropoffDateTime} onChange={handleChange} className="text-xs text-zinc-400 bg-transparent border-none outline-none w-full mt-1" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Availability Check */}
+                <div className="mt-4 pt-4 border-t border-zinc-200 flex items-center gap-3">
+                  <button type="button" onClick={checkAvailability} disabled={availabilityStatus === 'checking'}
+                    className="flex items-center gap-2 bg-brand-blue text-white px-6 py-2.5 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-brand-orange transition-all disabled:opacity-60"
+                  >
+                    {availabilityStatus === 'checking' ? <><div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Checking...</> : <><Calendar size={13} /> Check Availability</>}
+                  </button>
+                  <AnimatePresence>
+                    {availabilityStatus === 'available' && (
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 text-green-600 text-xs font-bold uppercase tracking-widest">
+                        <CheckCircle2 size={16} /> Available for {days} day{days > 1 ? 's' : ''}
+                      </motion.div>
+                    )}
+                    {availabilityStatus === 'unavailable' && (
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 text-red-500 text-xs font-bold uppercase tracking-widest">
+                        <X size={16} /> Not available for these dates
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* Pay Now / Pay Later */}
+              <div className="grid grid-cols-2 gap-4">
+                <button type="button" onClick={() => setFormData(p => ({ ...p, payNow: true }))}
+                  className={`p-5 rounded-2xl border-2 text-left transition-all ${formData.payNow ? 'border-brand-blue bg-brand-blue text-white' : 'border-zinc-100 bg-white text-brand-blue hover:border-brand-blue/30'}`}>
+                  <div className={`w-5 h-5 rounded-full border-2 mb-3 flex items-center justify-center ${formData.payNow ? 'border-white bg-white' : 'border-zinc-300'}`}>
+                    {formData.payNow && <div className="w-2.5 h-2.5 rounded-full bg-brand-blue" />}
+                  </div>
+                  <p className={`font-display font-black text-lg ${formData.payNow ? 'text-white' : 'text-brand-blue'}`}>Pay Now</p>
+                  <span className={`text-xs font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${formData.payNow ? 'bg-brand-orange text-white' : 'bg-brand-orange/10 text-brand-orange'}`}>Best Offer</span>
+                  <p className={`text-2xl font-display font-black mt-2 ${formData.payNow ? 'text-white' : 'text-brand-blue'}`}>ZMW {total.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                  <p className={`text-xs mt-1 ${formData.payNow ? 'text-white/70' : 'text-zinc-400'}`}>Guaranteed lower rates!</p>
+                </button>
+                <button type="button" onClick={() => setFormData(p => ({ ...p, payNow: false }))}
+                  className={`p-5 rounded-2xl border-2 text-left transition-all ${!formData.payNow ? 'border-brand-blue' : 'border-zinc-100 bg-white hover:border-brand-blue/30'}`}>
+                  <div className={`w-5 h-5 rounded-full border-2 mb-3 flex items-center justify-center ${!formData.payNow ? 'border-brand-blue' : 'border-zinc-300'}`}>
+                    {!formData.payNow && <div className="w-2.5 h-2.5 rounded-full bg-brand-blue" />}
+                  </div>
+                  <p className="font-display font-black text-lg text-brand-blue">Pay at Pick-up</p>
+                  <p className="text-2xl font-display font-black mt-2 text-brand-blue">ZMW {(total * 1.11).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                  <p className="text-xs text-zinc-400 mt-1">Free cancellation 24h before pick-up</p>
+                </button>
+              </div>
+
+              {/* Driver Details */}
+              <div className="bg-white border border-zinc-100 rounded-2xl p-6 space-y-5">
+                <h3 className="font-display font-black text-brand-blue text-lg uppercase">Driver Details</h3>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">First Name</label>
+                    <input required name="customerName" value={formData.customerName} onChange={handleChange} placeholder="First name" className="w-full bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-orange text-brand-blue font-medium" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Last Name</label>
+                    <input required name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Last name" className="w-full bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-orange text-brand-blue font-medium" />
+                  </div>
+                </div>
+
+                <div className="bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3 flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-brand-blue/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-brand-blue text-[10px] font-black">i</span>
+                  </div>
+                  <p className="text-xs text-zinc-500">The cardholder's name must match the driver's name. Payment cards need to be presented at pick-up.</p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Date of Birth</label>
+                  <input name="dateOfBirth" type="date" value={formData.dateOfBirth} onChange={handleChange} className="w-full bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-orange text-brand-blue font-medium" />
+                  <p className="text-[10px] text-zinc-400 mt-1">Additional charges may apply for underage drivers</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Phone Number</label>
+                    <input required name="phone" type="tel" value={formData.phone} onChange={handleChange} placeholder="+260..." className="w-full bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-orange text-brand-blue font-medium" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Email</label>
+                    <input required name="email" type="email" value={formData.email} onChange={handleChange} placeholder="email@example.com" className="w-full bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-orange text-brand-blue font-medium" />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Address</label>
+                  <input name="address" value={formData.address} onChange={handleChange} placeholder="Street address" className="w-full bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-orange text-brand-blue font-medium" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Country</label>
+                    <input name="country" value={formData.country} onChange={handleChange} className="w-full bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-orange text-brand-blue font-medium" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">City</label>
+                    <input name="city" value={formData.city} onChange={handleChange} className="w-full bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-orange text-brand-blue font-medium" />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* STEP 2 — Insurance */}
+          {step === 2 && (
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+              <h2 className="text-3xl font-display font-black text-brand-blue uppercase">Step 2. Insurance</h2>
+
+              {[
+                { name: 'extraInsurance', label: 'Comprehensive Insurance', desc: 'Full coverage for collision, theft, and third-party damage. Peace of mind for your entire rental period.', price: 150, badge: 'Recommended' },
+              ].map(item => (
+                <label key={item.name} className={`flex items-start gap-5 p-6 rounded-2xl border-2 cursor-pointer transition-all ${(formData as any)[item.name] ? 'border-brand-blue bg-brand-blue/5' : 'border-zinc-100 bg-white hover:border-brand-blue/30'}`}>
+                  <div className={`w-6 h-6 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${(formData as any)[item.name] ? 'border-brand-blue bg-brand-blue' : 'border-zinc-300'}`}>
+                    {(formData as any)[item.name] && <CheckCircle2 size={14} className="text-white" />}
+                  </div>
+                  <input type="checkbox" name={item.name} checked={(formData as any)[item.name]} onChange={handleChange} className="hidden" />
+                  <div className="flex-grow">
+                    <div className="flex items-center gap-3 mb-1">
+                      <p className="font-display font-black text-brand-blue text-lg">{item.label}</p>
+                      {item.badge && <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-brand-orange text-white">{item.badge}</span>}
+                    </div>
+                    <p className="text-zinc-500 text-sm leading-relaxed">{item.desc}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-display font-black text-brand-blue text-lg">+ZMW {item.price}</p>
+                    <p className="text-zinc-400 text-xs">per day</p>
+                  </div>
+                </label>
+              ))}
+
+              <div className="bg-zinc-50 border border-zinc-100 rounded-2xl p-5 flex items-start gap-3">
+                <ShieldCheck size={20} className="text-brand-orange flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-zinc-500">All vehicles come with basic third-party liability insurance as standard. Comprehensive cover is optional but highly recommended for international drivers.</p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* STEP 3 — Add-ons & Comments */}
+          {step === 3 && (
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+              <h2 className="text-3xl font-display font-black text-brand-blue uppercase">Step 3. Add-ons</h2>
+
+              {[
+                { name: 'extraDriver', label: 'Professional Driver / Chauffeur', desc: 'A vetted, professional driver for your entire rental duration. Ideal for business travel and airport transfers.', price: 250 },
+                { name: 'extraChildSeat', label: 'Child Safety Seat', desc: 'Approved child seat for infants and toddlers, properly fitted and safety-checked before each rental.', price: 75 },
+              ].map(item => (
+                <label key={item.name} className={`flex items-start gap-5 p-6 rounded-2xl border-2 cursor-pointer transition-all ${(formData as any)[item.name] ? 'border-brand-blue bg-brand-blue/5' : 'border-zinc-100 bg-white hover:border-brand-blue/30'}`}>
+                  <div className={`w-6 h-6 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${(formData as any)[item.name] ? 'border-brand-blue bg-brand-blue' : 'border-zinc-300'}`}>
+                    {(formData as any)[item.name] && <CheckCircle2 size={14} className="text-white" />}
+                  </div>
+                  <input type="checkbox" name={item.name} checked={(formData as any)[item.name]} onChange={handleChange} className="hidden" />
+                  <div className="flex-grow">
+                    <p className="font-display font-black text-brand-blue text-lg mb-1">{item.label}</p>
+                    <p className="text-zinc-500 text-sm leading-relaxed">{item.desc}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-display font-black text-brand-blue text-lg">+ZMW {item.price}</p>
+                    <p className="text-zinc-400 text-xs">per day</p>
+                  </div>
+                </label>
+              ))}
+
+              <div className="bg-white border border-zinc-100 rounded-2xl p-6 space-y-3">
+                <h3 className="font-display font-black text-brand-blue uppercase text-sm tracking-widest">Booking Comments</h3>
+                <p className="text-xs text-zinc-400">We will take into account all your wishes. What are your special requests for this rental?</p>
+                <textarea
+                  name="comments"
+                  value={formData.comments}
+                  onChange={handleChange}
+                  rows={4}
+                  placeholder="This field is optional..."
+                  className="w-full bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-orange text-brand-blue font-medium resize-none text-sm"
+                />
+              </div>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Right Sidebar — Sticky Total */}
+        <div className="lg:col-span-1">
+          <div className="bg-white border border-zinc-100 rounded-2xl p-6 shadow-lg sticky top-28 space-y-4">
+            <h3 className="font-display font-black text-brand-blue uppercase text-sm tracking-widest border-b border-zinc-50 pb-4">Price Details</h3>
+
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-zinc-500">Base rate ({days} day{days > 1 ? 's' : ''})</span>
+                <span className="font-bold text-brand-blue">ZMW {baseTotal.toLocaleString()}</span>
+              </div>
+              {formData.extraDriver && (
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">Driver</span>
+                  <span className="font-bold text-brand-blue">ZMW {(250 * days).toLocaleString()}</span>
+                </div>
+              )}
+              {formData.extraInsurance && (
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">Insurance</span>
+                  <span className="font-bold text-brand-blue">ZMW {(150 * days).toLocaleString()}</span>
+                </div>
+              )}
+              {formData.extraChildSeat && (
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">Child seat</span>
+                  <span className="font-bold text-brand-blue">ZMW {(75 * days).toLocaleString()}</span>
+                </div>
+              )}
+              <div className="flex justify-between border-t border-zinc-50 pt-3">
+                <span className="text-zinc-500">VAT (16%)</span>
+                <span className="font-bold text-brand-blue">ZMW {(subtotal * 0.16).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+              </div>
+            </div>
+
+            <div className="border-t border-zinc-100 pt-4">
+              <div className="flex justify-between items-center">
+                <span className="font-display font-black text-brand-blue uppercase text-sm">Total</span>
+                <span className="font-display font-black text-2xl text-brand-blue">ZMW {total.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+              </div>
+              <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1">
+                {formData.payNow ? 'Pay now — best rate' : 'Pay at pick-up'}
+              </p>
+            </div>
+
+            {/* Continue / Generate Quote */}
+            {step < 3 ? (
+              <button
+                type="button"
+                onClick={() => setStep(s => s + 1)}
+                disabled={!formData.customerName || !formData.phone || !formData.email}
+                className="w-full bg-brand-blue text-white py-4 rounded-2xl font-display font-bold uppercase tracking-widest hover:bg-brand-orange transition-all shadow-lg disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                Continue <ChevronRight size={18} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                className="w-full bg-brand-orange text-white py-4 rounded-2xl font-display font-bold uppercase tracking-widest hover:bg-brand-blue transition-all shadow-lg flex items-center justify-center gap-2"
+              >
+                Generate Quote <ArrowRight size={18} />
+              </button>
+            )}
+
+            {step > 1 && (
+              <button type="button" onClick={() => setStep(s => s - 1)} className="w-full py-2 text-zinc-400 font-bold uppercase text-[10px] tracking-widest hover:text-brand-blue transition-colors">
+                ← Go Back
+              </button>
+            )}
+
+            <p className="text-[10px] text-zinc-300 text-center font-bold uppercase tracking-widest">Free cancellation available</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
   const [formData, setFormData] = useState({
     customerName: '',
     phone: '',
@@ -896,12 +1292,45 @@ const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (
     extraChildSeat: false,
   });
 
+  const [availabilityStatus, setAvailabilityStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle');
+  const [checkedDates, setCheckedDates] = useState<{ pickup: string; dropoff: string } | null>(null);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
     }));
+    // Reset availability when dates or car changes
+    if (['pickupDateTime', 'dropoffDateTime', 'carId'].includes(name)) {
+      setAvailabilityStatus('idle');
+      setCheckedDates(null);
+    }
+  };
+
+  const checkAvailability = async () => {
+    if (!formData.pickupDateTime || !formData.dropoffDateTime) return;
+    setAvailabilityStatus('checking');
+    const pickupDate = new Date(formData.pickupDateTime);
+    const dropoffDate = new Date(formData.dropoffDateTime);
+    try {
+      const snapshot = await getDocs(query(collection(db, 'quotes')));
+      const existing = snapshot.docs.map(d => d.data());
+      const hasConflict = existing.some((q: any) => {
+        if (q.car?.id !== formData.carId) return false;
+        const qIn = new Date(q.pickupDateTime);
+        const qOut = new Date(q.dropoffDateTime);
+        return pickupDate < qOut && dropoffDate > qIn;
+      });
+      setAvailabilityStatus(hasConflict ? 'unavailable' : 'available');
+      setCheckedDates({
+        pickup: format(pickupDate, 'dd MMM yyyy, HH:mm'),
+        dropoff: format(dropoffDate, 'dd MMM yyyy, HH:mm'),
+      });
+    } catch (e) {
+      console.error(e);
+      setAvailabilityStatus('idle');
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -909,8 +1338,113 @@ const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (
     onSubmit(formData);
   };
 
+  const selectedCar = FLEET.find(c => c.id === formData.carId);
+  const days = Math.max(1, differenceInDays(new Date(formData.dropoffDateTime), new Date(formData.pickupDateTime)));
+
   return (
     <div className="bg-white p-8 md:p-12 rounded-3xl shadow-2xl border border-zinc-100 max-w-4xl mx-auto">
+
+      {/* Availability Checker Strip */}
+      <div className="mb-10 bg-zinc-50 border border-zinc-100 rounded-2xl p-6">
+        <div className="flex flex-col md:flex-row gap-4 items-end">
+          <div className="flex-1 space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Vehicle</label>
+            <select
+              name="carId"
+              value={formData.carId}
+              onChange={handleChange}
+              className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-orange text-brand-blue font-bold text-sm"
+            >
+              {FLEET.map(car => (
+                <option key={car.id} value={car.id}>{car.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex-1 space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Pick-up Date & Time</label>
+            <input
+              name="pickupDateTime"
+              type="datetime-local"
+              value={formData.pickupDateTime}
+              onChange={handleChange}
+              className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-orange text-brand-blue font-medium text-sm"
+            />
+          </div>
+          <div className="flex-1 space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Return Date & Time</label>
+            <input
+              name="dropoffDateTime"
+              type="datetime-local"
+              value={formData.dropoffDateTime}
+              onChange={handleChange}
+              className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-brand-orange text-brand-blue font-medium text-sm"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={checkAvailability}
+            disabled={availabilityStatus === 'checking'}
+            className="whitespace-nowrap bg-brand-blue text-white px-8 py-3 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-brand-orange transition-all shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {availabilityStatus === 'checking' ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Checking...
+              </>
+            ) : (
+              <>
+                <Calendar size={14} />
+                Check Availability
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Result Banner */}
+        <AnimatePresence>
+          {availabilityStatus === 'available' && checkedDates && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="mt-4 bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-4"
+            >
+              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 size={16} className="text-white" />
+              </div>
+              <div className="flex-grow">
+                <p className="font-bold text-green-700 text-sm uppercase tracking-widest">Vehicle Available!</p>
+                <p className="text-green-600 text-xs mt-1">
+                  <span className="font-bold">{selectedCar?.name}</span> is free from <span className="font-bold">{checkedDates.pickup}</span> to <span className="font-bold">{checkedDates.dropoff}</span> ({days} day{days > 1 ? 's' : ''})
+                </p>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <p className="text-[10px] text-green-500 font-bold uppercase tracking-widest">Est. Total</p>
+                <p className="text-green-700 font-display font-black text-lg">ZMW {((selectedCar?.pricePerDay || 0) * days).toLocaleString()}</p>
+              </div>
+            </motion.div>
+          )}
+          {availabilityStatus === 'unavailable' && checkedDates && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="mt-4 bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-4"
+            >
+              <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <X size={16} className="text-white" />
+              </div>
+              <div>
+                <p className="font-bold text-red-600 text-sm uppercase tracking-widest">Not Available</p>
+                <p className="text-red-500 text-xs mt-1">
+                  <span className="font-bold">{selectedCar?.name}</span> is already booked between <span className="font-bold">{checkedDates.pickup}</span> and <span className="font-bold">{checkedDates.dropoff}</span>. Please choose different dates or another vehicle.
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="grid md:grid-cols-2 gap-8">
           <div className="space-y-4">
@@ -991,17 +1525,12 @@ const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (
             />
           </div>
           <div className="space-y-4">
-            <label className="block text-xs font-bold uppercase tracking-widest text-zinc-400">Vehicle Type</label>
-            <select 
-              name="carId"
-              value={formData.carId}
-              onChange={handleChange}
-              className="w-full bg-zinc-50 border-none rounded-xl px-4 py-4 focus:ring-2 focus:ring-brand-gold outline-none text-brand-blue font-bold shadow-inner accent-brand-gold"
-            >
-              {FLEET.map(car => (
-                <option key={car.id} value={car.id}>{car.name} - ZMW {car.pricePerDay}/day</option>
-              ))}
-            </select>
+            <label className="block text-xs font-bold uppercase tracking-widest text-zinc-400">Vehicle Selected</label>
+            <div className="w-full bg-zinc-50 border-none rounded-xl px-4 py-4 text-brand-blue font-bold shadow-inner flex items-center gap-3">
+              <CarIcon size={16} className="text-brand-orange flex-shrink-0" />
+              <span>{selectedCar?.name || 'Select a vehicle above'}</span>
+              <span className="ml-auto text-xs text-zinc-400 font-medium">ZMW {selectedCar?.pricePerDay?.toLocaleString()}/day</span>
+            </div>
           </div>
           <div className="space-y-4 flex flex-col justify-center">
             <label className="block text-xs font-bold uppercase tracking-widest text-zinc-400 mb-2">Extra Options</label>
