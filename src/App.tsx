@@ -10,7 +10,6 @@ import {
   Plane, 
   Bus, 
   User, 
-  Clock, 
   ShieldCheck, 
   Smartphone, 
   DollarSign, 
@@ -25,7 +24,6 @@ import {
   Briefcase,
   Settings,
   Calendar,
-  Clock,
   CheckCircle2,
   Download,
   FileText,
@@ -1431,8 +1429,6 @@ const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (
     </div>
   );
 };
-  
-
 
 const QuoteResult = ({ quote, onConvert }: { quote: QuoteData, onConvert: () => void }) => {
   return (
