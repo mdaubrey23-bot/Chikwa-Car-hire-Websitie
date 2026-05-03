@@ -81,132 +81,282 @@ const WhatsAppButton = () => (
 const AdminDashboard = () => {
   const [cars, setCars] = useState<Car[]>([]);
   const [quotes, setQuotes] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'fleet' | 'quotes'>('fleet');
+  const [activeTab, setActiveTab] = useState<'fleet' | 'quotes' | 'availability'>('fleet');
+  const [editingCar, setEditingCar] = useState<Car | null>(null);
   const [newCar, setNewCar] = useState<Partial<Car>>({
-    name: '',
-    category: 'Economy',
-    passengers: 5,
-    luggage: 2,
-    transmission: 'Automatic',
-    pricePerDay: 800,
-    image: '',
+    name: '', category: 'Economy', passengers: 5, luggage: 2,
+    transmission: 'Automatic', pricePerDay: 800, image: '',
   });
 
   useEffect(() => {
     const carsQ = query(collection(db, 'cars'), orderBy('createdAt', 'desc'));
     const unsubCars = onSnapshot(carsQ, (snapshot) => {
-      setCars(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Car)));
+      setCars(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Car)));
     });
-
     const quotesQ = query(collection(db, 'quotes'), orderBy('createdAt', 'desc'));
     const unsubQuotes = onSnapshot(quotesQ, (snapshot) => {
-      setQuotes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setQuotes(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
     });
-
-    return () => {
-      unsubCars();
-      unsubQuotes();
-    };
+    return () => { unsubCars(); unsubQuotes(); };
   }, []);
 
   const handleAddCar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCar.name || !newCar.image) return;
     try {
-      await addDoc(collection(db, 'cars'), {
-        ...newCar,
-        createdAt: serverTimestamp(),
-      });
+      await addDoc(collection(db, 'cars'), { ...newCar, createdAt: serverTimestamp() });
       setNewCar({ name: '', category: 'Economy', passengers: 5, luggage: 2, transmission: 'Automatic', pricePerDay: 800, image: '' });
     } catch (error) { console.error(error); }
   };
+
+  const handleUpdateCar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCar) return;
+    try {
+      await updateDoc(doc(db, 'cars', editingCar.id), {
+        name: editingCar.name,
+        category: editingCar.category,
+        passengers: editingCar.passengers,
+        luggage: editingCar.luggage,
+        transmission: editingCar.transmission,
+        pricePerDay: editingCar.pricePerDay,
+        image: editingCar.image,
+      });
+      setEditingCar(null);
+    } catch (error) { console.error(error); }
+  };
+
+  // Check if a car is booked during a date range
+  const isCarBooked = (carId: string, checkIn: Date, checkOut: Date) => {
+    return quotes.some(q => {
+      if (q.car?.id !== carId) return false;
+      const qIn = new Date(q.pickupDateTime);
+      const qOut = new Date(q.dropoffDateTime);
+      return checkIn < qOut && checkOut > qIn;
+    });
+  };
+
+  const CarForm = ({ data, onChange, onSubmit, label }: { data: Partial<Car>, onChange: (d: any) => void, onSubmit: (e: React.FormEvent) => void, label: string }) => (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div className="space-y-1">
+        <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Vehicle Name</label>
+        <input placeholder="e.g. Toyota Land Cruiser" className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-brand-orange outline-none" value={data.name} onChange={e => onChange({...data, name: e.target.value})} />
+      </div>
+      <div className="space-y-1">
+        <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Category</label>
+        <select className="w-full px-4 py-3 rounded-xl border border-zinc-200" value={data.category} onChange={e => onChange({...data, category: e.target.value as any})}>
+          <option value="Economy">Economy</option>
+          <option value="SUV">SUV</option>
+          <option value="Luxury">Luxury</option>
+          <option value="Van">Van</option>
+          <option value="Truck">Truck</option>
+        </select>
+      </div>
+      <div className="flex gap-4">
+        <div className="w-1/2 space-y-1">
+          <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Pax</label>
+          <input type="number" className="w-full px-4 py-3 rounded-xl border border-zinc-200" value={data.passengers} onChange={e => onChange({...data, passengers: parseInt(e.target.value)})} />
+        </div>
+        <div className="w-1/2 space-y-1">
+          <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Bags</label>
+          <input type="number" className="w-full px-4 py-3 rounded-xl border border-zinc-200" value={data.luggage} onChange={e => onChange({...data, luggage: parseInt(e.target.value)})} />
+        </div>
+      </div>
+      <div className="space-y-1">
+        <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Transmission</label>
+        <select className="w-full px-4 py-3 rounded-xl border border-zinc-200" value={data.transmission} onChange={e => onChange({...data, transmission: e.target.value as any})}>
+          <option value="Automatic">Automatic</option>
+          <option value="Manual">Manual</option>
+        </select>
+      </div>
+      <div className="space-y-1">
+        <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Daily Rate (ZMW)</label>
+        <input type="number" className="w-full px-4 py-3 rounded-xl border border-zinc-200" value={data.pricePerDay} onChange={e => onChange({...data, pricePerDay: parseFloat(e.target.value)})} />
+      </div>
+      <div className="space-y-1">
+        <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Image URL</label>
+        <input placeholder="https://..." className="w-full px-4 py-3 rounded-xl border border-zinc-200" value={data.image} onChange={e => onChange({...data, image: e.target.value})} />
+      </div>
+      <button type="submit" className="w-full bg-brand-blue text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-brand-orange transition-colors shadow-lg">{label}</button>
+      {editingCar && (
+        <button type="button" onClick={() => setEditingCar(null)} className="w-full py-3 rounded-xl font-bold uppercase tracking-widest text-zinc-400 hover:text-zinc-600 text-xs">Cancel Edit</button>
+      )}
+    </form>
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
         <h2 className="text-4xl font-display font-black text-brand-blue uppercase">Owner Dashboard</h2>
-        <div className="flex bg-zinc-100 p-1 rounded-xl no-print">
-          <button 
-            onClick={() => setActiveTab('fleet')}
-            className={`px-6 py-2 rounded-lg font-bold text-sm uppercase tracking-widest transition-all ${activeTab === 'fleet' ? 'bg-brand-blue text-white shadow-lg' : 'text-zinc-500'}`}
-          >
-            Fleet Manager
-          </button>
-          <button 
-            onClick={() => setActiveTab('quotes')}
-            className={`px-6 py-2 rounded-lg font-bold text-sm uppercase tracking-widest transition-all ${activeTab === 'quotes' ? 'bg-brand-blue text-white shadow-lg' : 'text-zinc-500'}`}
-          >
-            Quotes ({quotes.length})
-          </button>
-          <button 
-            onClick={() => signOut(auth)}
-            className="px-6 py-2 rounded-lg font-bold text-sm uppercase tracking-widest text-red-500 hover:bg-red-50 transition-all ml-2"
-          >
-            Logout
-          </button>
+        <div className="flex bg-zinc-100 p-1 rounded-xl no-print flex-wrap gap-1">
+          {(['fleet', 'availability', 'quotes'] as const).map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)}
+              className={`px-5 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-brand-blue text-white shadow-lg' : 'text-zinc-500'}`}>
+              {tab === 'quotes' ? `Quotes (${quotes.length})` : tab === 'availability' ? 'Availability' : 'Fleet Manager'}
+            </button>
+          ))}
         </div>
       </div>
-      
-      {activeTab === 'fleet' ? (
+
+      {activeTab === 'fleet' && (
         <div className="grid lg:grid-cols-3 gap-12">
           <div className="lg:col-span-1">
             <div className="bg-zinc-50 p-8 rounded-3xl border border-zinc-200 sticky top-32">
-              <h3 className="text-xl font-display font-bold text-brand-blue mb-6">Add New Vehicle</h3>
-              <form onSubmit={handleAddCar} className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Vehicle Name</label>
-                  <input placeholder="e.g. Toyota Land Cruiser" className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-brand-orange outline-none" value={newCar.name} onChange={e => setNewCar({...newCar, name: e.target.value})} />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Category</label>
-                  <select className="w-full px-4 py-3 rounded-xl border border-zinc-200" value={newCar.category} onChange={e => setNewCar({...newCar, category: e.target.value as any})}>
-                    <option value="Economy">Economy</option>
-                    <option value="SUV">SUV</option>
-                    <option value="Luxury">Luxury</option>
-                    <option value="Van">Van</option>
-                    <option value="Truck">Truck</option>
-                  </select>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-1/2 space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Pax</label>
-                    <input type="number" className="w-full px-4 py-3 rounded-xl border border-zinc-200" value={newCar.passengers} onChange={e => setNewCar({...newCar, passengers: parseInt(e.target.value)})} />
+              {editingCar ? (
+                <>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-2 h-8 bg-brand-orange rounded-full"></div>
+                    <h3 className="text-xl font-display font-bold text-brand-blue">Editing Vehicle</h3>
                   </div>
-                  <div className="w-1/2 space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Bags</label>
-                    <input type="number" className="w-full px-4 py-3 rounded-xl border border-zinc-200" value={newCar.luggage} onChange={e => setNewCar({...newCar, luggage: parseInt(e.target.value)})} />
+                  <div className="mb-4 p-3 bg-brand-orange/5 border border-brand-orange/20 rounded-xl">
+                    <p className="text-xs font-bold text-brand-orange uppercase tracking-widest">{editingCar.name}</p>
                   </div>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Daily Rate (ZMW)</label>
-                  <input type="number" className="w-full px-4 py-3 rounded-xl border border-zinc-200" value={newCar.pricePerDay} onChange={e => setNewCar({...newCar, pricePerDay: parseFloat(e.target.value)})} />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Image URL</label>
-                  <input placeholder="https://..." className="w-full px-4 py-3 rounded-xl border border-zinc-200" value={newCar.image} onChange={e => setNewCar({...newCar, image: e.target.value})} />
-                </div>
-                <button className="w-full bg-brand-blue text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-brand-orange transition-colors shadow-lg shadow-brand-blue/20">Save Vehicle</button>
-              </form>
+                  <CarForm data={editingCar} onChange={setEditingCar} onSubmit={handleUpdateCar} label="Save Changes" />
+                </>
+              ) : (
+                <>
+                  <h3 className="text-xl font-display font-bold text-brand-blue mb-6">Add New Vehicle</h3>
+                  <CarForm data={newCar} onChange={setNewCar} onSubmit={handleAddCar} label="Save Vehicle" />
+                </>
+              )}
             </div>
           </div>
+
           <div className="lg:col-span-2">
             <div className="grid sm:grid-cols-2 gap-6">
-              {cars.map(car => (
-                <div key={car.id} className="bg-white p-5 rounded-2xl border border-zinc-100 shadow-sm flex items-center space-x-4 hover:shadow-md transition-shadow group">
-                  <img src={car.image} className="w-24 h-24 object-cover rounded-xl" />
-                  <div className="flex-grow">
-                    <h4 className="font-bold text-brand-blue">{car.name}</h4>
-                    <p className="text-xs text-zinc-400 font-bold uppercase tracking-widest mt-1">{car.category} • ZMW {car.pricePerDay}</p>
+              {cars.map(car => {
+                const activeBookings = quotes.filter(q => q.car?.id === car.id && new Date(q.dropoffDateTime) > new Date());
+                const isCurrentlyBooked = isCarBooked(car.id, new Date(), addDays(new Date(), 1));
+                return (
+                  <div key={car.id} className="bg-white rounded-2xl border border-zinc-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden group">
+                    <div className="relative h-36 overflow-hidden">
+                      <img src={car.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <div className={`absolute top-3 right-3 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${isCurrentlyBooked ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
+                        {isCurrentlyBooked ? 'Booked' : 'Available'}
+                      </div>
+                      {activeBookings.length > 0 && (
+                        <div className="absolute top-3 left-3 bg-brand-blue/90 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                          {activeBookings.length} booking{activeBookings.length > 1 ? 's' : ''}
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h4 className="font-bold text-brand-blue">{car.name}</h4>
+                      <p className="text-xs text-zinc-400 font-bold uppercase tracking-widest mt-1 mb-4">{car.category} • ZMW {car.pricePerDay}/day</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setEditingCar(car)}
+                          className="flex-1 py-2 bg-brand-blue/5 border border-brand-blue/10 text-brand-blue rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-brand-blue hover:text-white transition-all"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => { if (confirm(`Delete ${car.name}?`)) deleteDoc(doc(db, 'cars', car.id)); }}
+                          className="flex-1 py-2 bg-red-50 border border-red-100 text-red-400 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <button onClick={() => deleteDoc(doc(db, 'cars', car.id))} className="text-zinc-300 hover:text-red-500 p-2 transition-colors opacity-0 group-hover:opacity-100">
-                    <X size={20} />
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
-      ) : (
+      )}
+
+      {activeTab === 'availability' && (
+        <div className="space-y-8">
+          <div className="bg-zinc-50 p-6 rounded-2xl border border-zinc-100 flex flex-wrap gap-6 items-center">
+            <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-green-500"></div><span className="text-xs font-bold uppercase tracking-widest text-zinc-500">Available</span></div>
+            <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-red-500"></div><span className="text-xs font-bold uppercase tracking-widest text-zinc-500">Booked</span></div>
+            <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-brand-orange"></div><span className="text-xs font-bold uppercase tracking-widest text-zinc-500">Ending Soon (today)</span></div>
+          </div>
+
+          <div className="grid gap-6">
+            {cars.map(car => {
+              const carBookings = quotes
+                .filter(q => q.car?.id === car.id)
+                .sort((a, b) => new Date(a.pickupDateTime).getTime() - new Date(b.pickupDateTime).getTime());
+              const isCurrentlyBooked = isCarBooked(car.id, new Date(), addDays(new Date(), 1));
+              const endingToday = carBookings.some(q => {
+                const out = new Date(q.dropoffDateTime);
+                return out >= new Date() && out <= addDays(new Date(), 1);
+              });
+
+              return (
+                <div key={car.id} className="bg-white rounded-2xl border border-zinc-100 shadow-sm overflow-hidden">
+                  <div className="flex items-center gap-6 p-6 border-b border-zinc-50">
+                    <img src={car.image} className="w-20 h-20 object-cover rounded-xl" />
+                    <div className="flex-grow">
+                      <div className="flex items-center gap-3 mb-1">
+                        <h4 className="font-display font-bold text-brand-blue text-lg">{car.name}</h4>
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                          endingToday ? 'bg-brand-orange/10 text-brand-orange' :
+                          isCurrentlyBooked ? 'bg-red-100 text-red-500' : 'bg-green-100 text-green-600'
+                        }`}>
+                          {endingToday ? 'Ending Today' : isCurrentlyBooked ? 'Currently Booked' : 'Available Now'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-400 font-bold uppercase tracking-widest">{car.category} • {carBookings.length} total booking{carBookings.length !== 1 ? 's' : ''}</p>
+                    </div>
+                  </div>
+
+                  {carBookings.length > 0 ? (
+                    <div className="divide-y divide-zinc-50">
+                      {carBookings.map((q, i) => {
+                        const pickUp = new Date(q.pickupDateTime);
+                        const dropOff = new Date(q.dropoffDateTime);
+                        const isPast = dropOff < new Date();
+                        const isActive = pickUp <= new Date() && dropOff >= new Date();
+                        const isUpcoming = pickUp > new Date();
+                        return (
+                          <div key={i} className={`flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 gap-4 ${isPast ? 'opacity-40' : ''}`}>
+                            <div className="flex items-center gap-4">
+                              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isActive ? 'bg-red-500' : isUpcoming ? 'bg-brand-orange' : 'bg-zinc-300'}`}></div>
+                              <div>
+                                <p className="font-bold text-brand-blue text-sm">{q.customerName}</p>
+                                <p className="text-xs text-zinc-400">{q.phone} • {q.reference}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-6 text-xs font-bold">
+                              <div>
+                                <p className="text-[10px] text-zinc-400 uppercase tracking-widest mb-0.5">Pick-up</p>
+                                <p className="text-brand-blue">{format(pickUp, 'dd MMM yyyy')}</p>
+                                <p className="text-zinc-400">{format(pickUp, 'HH:mm')}</p>
+                              </div>
+                              <ChevronRight size={16} className="text-zinc-300" />
+                              <div>
+                                <p className="text-[10px] text-zinc-400 uppercase tracking-widest mb-0.5">Drop-off</p>
+                                <p className="text-brand-blue">{format(dropOff, 'dd MMM yyyy')}</p>
+                                <p className="text-zinc-400">{format(dropOff, 'HH:mm')}</p>
+                              </div>
+                              <span className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-widest ${
+                                isActive ? 'bg-red-100 text-red-500' :
+                                isUpcoming ? 'bg-brand-orange/10 text-brand-orange' :
+                                'bg-zinc-100 text-zinc-400'
+                              }`}>
+                                {isActive ? 'Active' : isUpcoming ? 'Upcoming' : 'Completed'}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="px-6 py-8 text-center">
+                      <p className="text-zinc-300 text-xs font-bold uppercase tracking-widest">No bookings for this vehicle</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'quotes' && (
         <div className="space-y-6">
           {quotes.map(q => (
             <div key={q.id} className="bg-white p-8 rounded-3xl border border-zinc-100 shadow-sm hover:shadow-md transition-all group">
@@ -223,9 +373,9 @@ const AdminDashboard = () => {
                       <p className="flex items-center gap-3 text-sm text-zinc-600 font-medium bg-zinc-50 p-2 rounded-lg border border-zinc-100"><Mail size={16} className="text-brand-orange" /> {q.email}</p>
                     </div>
                     <div className="space-y-2">
-                       <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-widest">Rental Route</p>
-                       <p className="text-sm font-semibold text-zinc-700">{q.pickupLocation} → {q.dropoffLocation}</p>
-                       <p className="text-xs text-zinc-400">{q.durationDays} Days Duration</p>
+                      <p className="text-[10px] font-bold uppercase text-zinc-400 tracking-widest">Rental Route</p>
+                      <p className="text-sm font-semibold text-zinc-700">{q.pickupLocation} → {q.dropoffLocation}</p>
+                      <p className="text-xs text-zinc-400">{q.durationDays} Days Duration</p>
                     </div>
                   </div>
                 </div>
@@ -238,20 +388,19 @@ const AdminDashboard = () => {
                       <span className="text-sm font-bold text-brand-blue">{q.car?.name}</span>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => deleteDoc(doc(db, 'quotes', q.id))}
-                    className="text-zinc-300 hover:text-red-500 transition-colors mt-6 opacity-0 group-hover:opacity-100"
-                  >
+                  <button onClick={() => deleteDoc(doc(db, 'quotes', q.id))} className="text-zinc-300 hover:text-red-500 transition-colors mt-6 opacity-0 group-hover:opacity-100 text-xs font-bold uppercase tracking-widest">
                     Delete Quote
                   </button>
                 </div>
               </div>
             </div>
           ))}
-          {quotes.length === 0 && <div className="text-center py-24 bg-zinc-50 rounded-[3rem] border border-dashed border-zinc-200">
-            <FileText size={48} className="mx-auto text-zinc-200 mb-4" />
-            <p className="text-zinc-400 font-medium">No customer quotes found in the database.</p>
-          </div>}
+          {quotes.length === 0 && (
+            <div className="text-center py-24 bg-zinc-50 rounded-[3rem] border border-dashed border-zinc-200">
+              <FileText size={48} className="mx-auto text-zinc-200 mb-4" />
+              <p className="text-zinc-400 font-medium">No customer quotes found in the database.</p>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -1238,6 +1387,21 @@ export default function App() {
   const generateQuote = (formData: any) => {
     const car = cars.find(c => c.id === formData.carId) || cars[0];
     const days = Math.max(1, differenceInDays(new Date(formData.dropoffDateTime), new Date(formData.pickupDateTime)));
+
+    // Overbooking prevention check
+    const allQuotes = JSON.parse(sessionStorage.getItem('quotes_cache') || '[]');
+    const pickupDate = new Date(formData.pickupDateTime);
+    const dropoffDate = new Date(formData.dropoffDateTime);
+    const hasConflict = allQuotes.some((q: any) => {
+      if (q.car?.id !== formData.carId) return false;
+      const qIn = new Date(q.pickupDateTime);
+      const qOut = new Date(q.dropoffDateTime);
+      return pickupDate < qOut && dropoffDate > qIn;
+    });
+    if (hasConflict) {
+      alert(`Sorry — ${car.name} is already booked during those dates. Please choose different dates or another vehicle.`);
+      return;
+    }
     
     // Simple cost calculation
     const baseRate = car.pricePerDay * days;
@@ -1281,6 +1445,9 @@ export default function App() {
         ...quote,
         createdAt: serverTimestamp(),
       });
+      // Cache for overbooking check
+      const existing = JSON.parse(sessionStorage.getItem('quotes_cache') || '[]');
+      sessionStorage.setItem('quotes_cache', JSON.stringify([...existing, quote]));
     } catch (e) { console.error("Error saving quote:", e); }
 
     setCurrentQuote(quote);
