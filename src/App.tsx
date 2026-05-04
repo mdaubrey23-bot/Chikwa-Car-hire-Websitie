@@ -33,7 +33,8 @@ import {
   Menu,
   Search,
   MessageCircle,
-  ArrowRight
+  ArrowRight,
+  Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { format, addDays, differenceInDays } from 'date-fns';
