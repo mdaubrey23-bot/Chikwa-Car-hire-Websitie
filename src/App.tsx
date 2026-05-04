@@ -221,16 +221,37 @@ const AdminDashboard = () => {
                     />
                   </div>
 
-                  {/* Image URL */}
+                  {/* Image Upload */}
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Photo URL</label>
-                    <input
-                      className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-brand-orange outline-none text-brand-blue font-medium"
-                      value={editingCar.image}
-                      onChange={e => setEditingCar({...editingCar, image: e.target.value})}
-                      placeholder="https://images.unsplash.com/..."
-                    />
-                    <p className="text-[10px] text-zinc-400 font-medium">Paste any image URL — Unsplash, Google Images (right-click → copy image address), etc.</p>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Vehicle Photo</label>
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        id="edit-car-image-upload"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const data = new FormData();
+                          data.append('file', file);
+                          data.append('upload_preset', 'HIREUP_UPLOADS');
+                          const res = await fetch('https://api.cloudinary.com/v1_1/dpxtfqw1o/image/upload', { method: 'POST', body: data });
+                          const json = await res.json();
+                          setEditingCar({...editingCar, image: json.secure_url});
+                        }}
+                      />
+                      <label htmlFor="edit-car-image-upload" className="w-full px-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-brand-orange outline-none bg-white cursor-pointer flex items-center gap-3 hover:border-brand-orange transition-all">
+                        {editingCar.image ? (
+                          <img src={editingCar.image} className="w-12 h-10 object-cover rounded-lg" />
+                        ) : (
+                          <div className="w-12 h-10 bg-zinc-100 rounded-lg flex items-center justify-center">
+                            <CarIcon size={20} className="text-zinc-300" />
+                          </div>
+                        )}
+                        <span className="text-sm font-bold text-zinc-400">{editingCar.image ? 'Photo uploaded ✓' : 'Click to upload photo'}</span>
+                      </label>
+                    </div>
                   </div>
 
                   {/* Category & Transmission */}
