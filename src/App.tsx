@@ -1185,7 +1185,7 @@ const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (
                         <p className="text-sm text-zinc-600 leading-relaxed mb-3">
                           Send your <span className="font-bold">proof of payment screenshot</span> to our WhatsApp along with your booking reference number.
                         </p>
-                        
+                        <a
                           href="https://wa.me/260977515759"
                           target="_blank"
                           rel="noopener noreferrer"
