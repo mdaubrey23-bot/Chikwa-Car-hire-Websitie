@@ -393,8 +393,35 @@ const AdminDashboard = () => {
                   <input type="number" className="w-full px-4 py-3 rounded-xl border border-zinc-200" value={newCar.pricePerDay} onChange={e => setNewCar({...newCar, pricePerDay: parseFloat(e.target.value)})} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Image URL</label>
-                  <input placeholder="https://..." className="w-full px-4 py-3 rounded-xl border border-zinc-200" value={newCar.image} onChange={e => setNewCar({...newCar, image: e.target.value})} />
+                  <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Vehicle Photo</label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id="car-image-upload"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const data = new FormData();
+                        data.append('file', file);
+                        data.append('upload_preset', 'HIREUP_UPLOADS');
+                        const res = await fetch('https://api.cloudinary.com/v1_1/dpxtfqw1o/image/upload', { method: 'POST', body: data });
+                        const json = await res.json();
+                        setNewCar({...newCar, image: json.secure_url});
+                      }}
+                    />
+                    <label htmlFor="car-image-upload" className="w-full px-4 py-3 rounded-xl border border-zinc-200 outline-none bg-white cursor-pointer flex items-center gap-3 hover:border-brand-orange transition-all">
+                      {newCar.image ? (
+                        <img src={newCar.image} className="w-12 h-10 object-cover rounded-lg" />
+                      ) : (
+                        <div className="w-12 h-10 bg-zinc-100 rounded-lg flex items-center justify-center">
+                          <CarIcon size={20} className="text-zinc-300" />
+                        </div>
+                      )}
+                      <span className="text-sm font-bold text-zinc-400">{newCar.image ? 'Photo uploaded ✓' : 'Click to upload photo'}</span>
+                    </label>
+                  </div>
                 </div>
                 <button type="submit" className="w-full bg-brand-blue text-white py-4 rounded-xl font-bold uppercase tracking-widest hover:bg-brand-orange transition-colors shadow-lg">Save Vehicle</button>
               </form>
