@@ -944,7 +944,7 @@ const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (
     dropoffLocation: 'Lusaka City Centre',
     pickupDateTime: format(addDays(new Date(), 1), "yyyy-MM-dd'T'10:00"),
     dropoffDateTime: format(addDays(new Date(), 3), "yyyy-MM-dd'T'10:00"),
-    carId: initialCar?.id || FLEET[0].id,
+    carId: initialCar?.id || '',
     extraDriver: false,
     extraInsurance: false,
     extraChildSeat: false,
