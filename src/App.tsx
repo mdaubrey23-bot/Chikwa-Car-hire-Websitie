@@ -2327,7 +2327,7 @@ export default function App() {
 
 const Footer = () => {
   return (
-    <footer className="bg-brand-blue text-white pt-20 pb-10 border-t border-brand-orange/10 no-print">
+    <footer className="bg-white text-zinc-800 pt-20 pb-10 border-t-2 border-brand-blue no-print">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20">
           <div className="space-y-6">
@@ -2335,21 +2335,21 @@ const Footer = () => {
               <div className="w-8 h-8 bg-brand-orange rounded flex items-center justify-center mr-3">
                 <CarIcon size={20} className="text-white" />
               </div>
-              <span className="font-display font-black text-2xl tracking-tighter uppercase">Chikwa</span>
+              <span className="font-display font-black text-2xl tracking-tighter uppercase text-zinc-900">Chikwa</span>
             </div>
-            <p className="text-gray-400 font-light leading-relaxed">
+            <p className="text-zinc-500 font-light leading-relaxed">
               {BRAND_STORY.introduction}
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-brand-orange hover:text-white transition-all"><Facebook size={18} /></a>
-              <a href="#" className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-brand-orange hover:text-white transition-all"><Instagram size={18} /></a>
-              <a href="#" className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-brand-orange hover:text-white transition-all"><Twitter size={18} /></a>
+              <a href="#" className="w-10 h-10 rounded-full border border-zinc-200 text-zinc-500 flex items-center justify-center hover:bg-brand-blue hover:text-white transition-all"><Facebook size={18} /></a>
+              <a href="#" className="w-10 h-10 rounded-full border border-zinc-200 text-zinc-500 flex items-center justify-center hover:bg-brand-blue hover:text-white transition-all"><Instagram size={18} /></a>
+              <a href="#" className="w-10 h-10 rounded-full border border-zinc-200 text-zinc-500 flex items-center justify-center hover:bg-brand-blue hover:text-white transition-all"><Twitter size={18} /></a>
             </div>
           </div>
           
           <div>
-            <h4 className="font-display font-bold uppercase tracking-widest text-xs mb-8 text-brand-gold">Quick Links</h4>
-            <ul className="space-y-4 text-sm text-gray-400">
+            <h4 className="font-display font-bold uppercase tracking-widest text-xs mb-8 text-brand-blue">Quick Links</h4>
+            <ul className="space-y-4 text-sm text-zinc-500">
               <li><button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="hover:text-white transition-colors">Our Fleet</button></li>
               <li><a href="#" className="hover:text-white transition-colors">Services</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
@@ -2358,7 +2358,7 @@ const Footer = () => {
           </div>
           
           <div>
-            <h4 className="font-display font-bold uppercase tracking-widest text-xs mb-8 text-brand-gold">Contact Us</h4>
+            <h4 className="font-display font-bold uppercase tracking-widest text-xs mb-8 text-brand-blue">Contact Us</h4>
             <ul className="space-y-4 text-sm text-gray-400">
               <li className="flex items-start">
                 <MapPin size={16} className="mr-3 text-brand-gold shrink-0" />
@@ -2376,7 +2376,7 @@ const Footer = () => {
           </div>
           
           <div>
-            <h4 className="font-display font-bold uppercase tracking-widest text-xs mb-8 text-brand-gold">Newsletter</h4>
+            <h4 className="font-display font-bold uppercase tracking-widest text-xs mb-8 text-brand-blue">Newsletter</h4>
             <p className="text-gray-400 text-xs mb-4">Get exclusive offers and travel updates.</p>
             <div className="flex bg-white/5 border border-white/10 rounded-lg overflow-hidden">
               <input type="email" placeholder="Email Address" className="bg-transparent px-4 py-3 text-xs w-full outline-none" />
@@ -2385,7 +2385,7 @@ const Footer = () => {
           </div>
         </div>
         
-        <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+        <div className="pt-10 border-t border-zinc-200 flex flex-col md:flex-row justify-between items-center text-[10px] font-bold uppercase tracking-widest text-zinc-400">
           <p>© {new Date().getFullYear()} Chikwa Car Hire Limited. All rights reserved.</p>
           <p className="mt-4 md:mt-0">Built for Excellence in Zambia</p>
         </div>
