@@ -2,9 +2,9 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-blue: #CC0000;
+  --color-brand-blue: #C41230;
   --color-brand-orange: #111111;
-  --color-brand-gold: #CC0000;
+  --color-brand-gold: #C41230;
   --color-brand-cream: #FFF9E3;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Montserrat", sans-serif;

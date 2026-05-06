@@ -643,14 +643,14 @@ const Navbar = ({ currentPage, onPageChange, user, onLogout }: { currentPage: Pa
               <button
                 key={item.page}
                 onClick={() => onPageChange(item.page)}
-                className={`font-display text-sm uppercase tracking-widest font-medium transition-colors hover:text-brand-orange ${currentPage === item.page ? 'text-brand-orange' : 'text-gray-300'}`}
+                className={`font-display text-sm uppercase tracking-widest font-medium transition-colors hover:text-brand-blue ${currentPage === item.page ? 'text-brand-blue' : 'text-zinc-700'}`}
               >
                 {item.label}
               </button>
             ))}
             <button 
               onClick={() => onPageChange(Page.QUOTE)}
-              className="bg-brand-orange text-white px-6 py-2.5 rounded-full font-display text-sm font-bold uppercase tracking-wider hover:bg-white hover:text-brand-blue transition-all shadow-lg hover:shadow-brand-orange/20 active:scale-95"
+              className="bg-zinc-900 text-white px-6 py-2.5 rounded-lg font-display text-sm font-bold uppercase tracking-wider hover:bg-brand-blue transition-all shadow-lg active:scale-95"
             >
               Get a Quote
             </button>
@@ -2213,7 +2213,7 @@ export default function App() {
             </section>
 
             {/* Testimonials */}
-            <section className="py-24 bg-brand-blue text-white">
+            <section className="py-24 text-white" style={{backgroundColor: '#C41230'}}>
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 <h2 className="text-4xl font-display font-bold mb-16">Client Testimonials</h2>
                 <div className="grid md:grid-cols-2 gap-12">
