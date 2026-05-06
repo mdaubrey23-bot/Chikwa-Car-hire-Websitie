@@ -624,7 +624,7 @@ const Navbar = ({ currentPage, onPageChange, user, onLogout }: { currentPage: Pa
   navItems.push({ label: 'Admin', page: Page.ADMIN });
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 bg-brand-blue/95 backdrop-blur-md text-white border-b border-brand-orange/20 no-print">
+    <nav className="fixed top-0 left-0 w-full z-50 bg-white text-brand-blue border-b-2 border-brand-blue no-print">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
           <div className="flex items-center cursor-pointer" onClick={() => onPageChange(Page.HOME)}>
@@ -717,7 +717,7 @@ const Hero = ({ onGetQuote }: { onGetQuote: () => void }) => {
           className="w-full h-full object-cover brightness-[0.3]"
           referrerPolicy="no-referrer"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-brand-blue via-brand-blue/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/60 to-transparent" />
       </div>
       
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -728,11 +728,11 @@ const Hero = ({ onGetQuote }: { onGetQuote: () => void }) => {
           className="max-w-2xl"
         >
           <span className="text-brand-orange font-display font-bold uppercase tracking-[0.3em] text-sm mb-4 block">Vehicle Hiring Experts</span>
-          <h1 className="text-5xl md:text-7xl font-display font-bold text-white leading-tight mb-6">
+          <h1 className="text-5xl md:text-7xl font-display font-bold text-zinc-900 leading-tight mb-6">
             Zambia's Best <br />
-            <span className="text-brand-orange">Service Provider.</span>
+            <span className="text-brand-blue">Service Provider.</span>
           </h1>
-          <p className="text-xl text-gray-300 mb-10 leading-relaxed font-light">
+          <p className="text-xl text-zinc-600 mb-10 leading-relaxed font-light">
             Providing excellent and manageable services in car hire across Lusaka and Zambia. Experience the Chikwa standard of integrity and honesty.
           </p>
           <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6">

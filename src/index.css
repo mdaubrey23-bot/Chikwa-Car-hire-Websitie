@@ -3,8 +3,8 @@
 
 @theme {
   --color-brand-blue: #CC0000;
-  --color-brand-orange: #FF0000;
-  --color-brand-gold: #FFFFFF;
+  --color-brand-orange: #111111;
+  --color-brand-gold: #CC0000;
   --color-brand-cream: #FFF9E3;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Montserrat", sans-serif;
@@ -35,14 +35,14 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #CC0000 0%, #FF0000 100%);
+  background: #CC0000;
   border-radius: 1.5rem 1.5rem 0 0;
 }
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: #f4f4f5; }
 ::-webkit-scrollbar-thumb { background: #CC0000; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #FF0000; }
+::-webkit-scrollbar-thumb:hover { background: #111111; }
 
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
@@ -52,7 +52,7 @@
 }
 .card-hover:hover {
   transform: translateY(-4px);
-  box-shadow: 0 24px 48px rgba(204, 0, 0, 0.12);
+  box-shadow: 0 24px 48px rgba(204, 0, 0, 0.10);
 }
 
 .badge-paid {
@@ -79,7 +79,7 @@
 .section-divider {
   width: 48px;
   height: 3px;
-  background: linear-gradient(90deg, #CC0000, #FF0000);
+  background: #CC0000;
   border-radius: 2px;
 }
 
