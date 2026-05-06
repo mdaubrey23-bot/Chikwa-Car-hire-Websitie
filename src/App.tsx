@@ -632,8 +632,8 @@ const Navbar = ({ currentPage, onPageChange, user, onLogout }: { currentPage: Pa
               <CarIcon className="text-white" size={24} />
             </div>
             <div>
-              <span className="font-display font-bold text-xl tracking-tight leading-none block uppercase">Chikwa</span>
-              <span className="text-[10px] text-brand-orange uppercase tracking-[0.2em] font-medium block">Car Hire Ltd</span>
+              <span className="font-display font-bold text-2xl tracking-tight leading-none block uppercase">Chikwa Car Hire</span>
+              <span className="text-xs text-brand-blue uppercase tracking-[0.2em] font-bold block">Limited · Lusaka, Zambia</span>
             </div>
           </div>
           
