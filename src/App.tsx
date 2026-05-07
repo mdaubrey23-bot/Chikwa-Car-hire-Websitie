@@ -2153,12 +2153,12 @@ const Footer = () => {
             <h4 className="font-display font-bold uppercase tracking-widest text-xs mb-8 text-brand-blue">Contact Us</h4>
             <ul className="space-y-4 text-sm text-gray-400">
               <li className="flex items-start">
-                <MapPin size={16} className="mr-3 text-brand-gold shrink-0" />
-                <span>Lusaka Business District,<br />Lusaka, Zambia</span>
+                <MapPin size={16} className="mr-3 text-brand-gold shrink-0 mt-1" />
+                <span>Plot No 26 Bende Road,<br />Olympia Extension,<br />Lusaka, Zambia</span>
               </li>
-              <li className="flex items-center">
-                <Phone size={16} className="mr-3 text-brand-gold" />
-                <span>{COMPANY_DETAILS.phone}</span>
+              <li className="flex items-start">
+                <Phone size={16} className="mr-3 text-brand-gold shrink-0 mt-1" />
+                <span>+260 977 515759<br />+260 777 515759<br />+260 966 515759<br />Landline: 0211 230290</span>
               </li>
               <li className="flex items-center">
                 <Mail size={16} className="mr-3 text-brand-gold" />
