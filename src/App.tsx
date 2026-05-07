@@ -778,6 +778,120 @@ const Hero = ({ onGetQuote }: { onGetQuote: () => void }) => {
   );
 };
 
+const CarSlideshow = () => {
+  const [carsFromDb, setCarsFromDb] = useState<Car[]>([]);
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    const q = query(collection(db, 'cars'), orderBy('createdAt', 'desc'));
+    const unsub = onSnapshot(q, (snapshot) => {
+      setCarsFromDb(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Car)));
+    });
+    return () => unsub();
+  }, []);
+
+  const allCars = [...FLEET, ...carsFromDb];
+
+  useEffect(() => {
+    if (allCars.length === 0) return;
+    const timer = setInterval(() => {
+      setCurrent(prev => (prev + 1) % allCars.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [allCars.length]);
+
+  if (allCars.length === 0) return null;
+
+  const car = allCars[current];
+
+  return (
+    <div className="flex flex-col lg:flex-row items-center gap-16">
+      <div className="lg:w-1/2 relative">
+        <div className="relative overflow-hidden rounded-2xl bg-white border border-zinc-100 shadow-sm p-8">
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={car.id}
+              src={car.image}
+              alt={car.name}
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -40 }}
+              transition={{ duration: 0.4 }}
+              className="w-full h-72 object-contain"
+            />
+          </AnimatePresence>
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={car.name}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-center text-zinc-500 font-medium mt-4 text-sm"
+            >
+              {car.name}
+            </motion.p>
+          </AnimatePresence>
+
+          {/* Prev / Next */}
+          <button
+            onClick={() => setCurrent(prev => (prev - 1 + allCars.length) % allCars.length)}
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-zinc-200 rounded-full flex items-center justify-center shadow hover:bg-brand-blue hover:text-white transition-all"
+          >
+            <ChevronRight size={18} className="rotate-180" />
+          </button>
+          <button
+            onClick={() => setCurrent(prev => (prev + 1) % allCars.length)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white border border-zinc-200 rounded-full flex items-center justify-center shadow hover:bg-brand-blue hover:text-white transition-all"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+
+        {/* Thumbnail strip */}
+        <div className="flex gap-2 mt-4 overflow-x-auto pb-2 scrollbar-hide justify-center flex-wrap">
+          {allCars.map((c, i) => (
+            <button
+              key={c.id}
+              onClick={() => setCurrent(i)}
+              className={`w-14 h-10 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${i === current ? 'border-brand-blue' : 'border-zinc-200 opacity-60'}`}
+            >
+              <img src={c.image} alt={c.name} className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="lg:w-1/2 space-y-6">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={car.id + 'info'}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <span className="text-brand-blue font-display font-black text-sm uppercase tracking-widest block mb-2">{car.category}</span>
+            <h3 className="text-3xl font-display font-black text-zinc-900 uppercase mb-6">{car.name}</h3>
+            <ul className="space-y-3 mb-8">
+              <li className="flex items-center gap-3 text-zinc-600"><span className="w-2 h-2 rounded-full bg-brand-blue flex-shrink-0"></span>{car.name}</li>
+              <li className="flex items-center gap-3 text-zinc-600"><span className="w-2 h-2 rounded-full bg-brand-blue flex-shrink-0"></span>{car.passengers} Seats</li>
+              <li className="flex items-center gap-3 text-zinc-600"><span className="w-2 h-2 rounded-full bg-brand-blue flex-shrink-0"></span>Automatic & Manual Transmission</li>
+              <li className="flex items-center gap-3 text-zinc-600"><span className="w-2 h-2 rounded-full bg-brand-blue flex-shrink-0"></span>Fully Insured</li>
+              <li className="flex items-center gap-3 text-zinc-600"><span className="w-2 h-2 rounded-full bg-brand-blue flex-shrink-0"></span>Chauffeur Service Available</li>
+            </ul>
+            <button
+              onClick={() => window.location.href = '/#quote'}
+              className="bg-brand-blue text-white px-10 py-4 rounded-xl font-display font-bold uppercase tracking-widest hover:bg-brand-orange transition-all shadow-lg"
+            >
+              Book a Vehicle
+            </button>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+};
+
 const ServicesSection = () => {
   const getIcon = (iconName: string) => {
     switch(iconName) {
@@ -2128,6 +2242,18 @@ export default function App() {
             </section>
 
             <ServicesSection />
+
+            {/* Car Slideshow Section */}
+            <section className="py-24 bg-zinc-50 border-t border-zinc-100">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center mb-12">
+                  <h2 className="text-4xl font-display font-black text-brand-blue uppercase mb-4">Car Rentals</h2>
+                  <div className="w-16 h-1 bg-brand-blue mx-auto mb-6"></div>
+                  <p className="text-zinc-500 max-w-xl mx-auto text-lg font-light">Rent a car from our diversified fleet at affordable rates. Choose from 4x4s, Sedans, Vans or Luxury Cars.</p>
+                </div>
+                <CarSlideshow />
+              </div>
+            </section>
 
             {/* Clienteles & Bankers */}
             <section className="py-24 bg-zinc-50">
