@@ -782,9 +782,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Quotes Tab */}
-      {activeTab === 'quotes' && (
-
+      
       {/* Quotes Tab */}
       {activeTab === 'quotes' && (
         <div className="space-y-6">
