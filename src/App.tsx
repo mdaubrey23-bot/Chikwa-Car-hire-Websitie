@@ -1253,11 +1253,6 @@ const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (
     </div>
   );
 };
-  const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
-    customerName: '',
-    lastName: '',
-    dateOfBirth: '',
     phone: '',
     email: '',
     address: '',
