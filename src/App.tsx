@@ -356,7 +356,7 @@ const AdminDashboard = () => {
             <button key={tab} onClick={() => setActiveTab(tab)}
               className={`px-5 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-brand-blue text-white shadow-lg' : 'text-zinc-500'}`}>
               {tab === 'quotes' ? `Quotes (${quotes.length})` : tab === 'availability' ? 'Availability' : tab === 'generate' ? 'Generate Doc' : 'Fleet Manager'}
-            </button>
+            </button> 
           ))}
         </div>
       </div>
