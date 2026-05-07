@@ -404,10 +404,15 @@ const AdminDashboard = () => {
                         onChange={e => setEditingCar({...editingCar, category: e.target.value as any})}
                       >
                         <option value="Economy">Economy</option>
+                        <option value="Sedan">Sedan</option>
                         <option value="SUV">SUV</option>
+                        <option value="4x4">4x4</option>
                         <option value="Luxury">Luxury</option>
                         <option value="Van">Van</option>
-                        <option value="Truck">Truck</option>
+                        <option value="Bus">Bus</option>
+                        <option value="Minibus">Minibus</option>
+                        <option value="Coaster">Coaster</option>
+                        <option value="Pickup">Pickup / Truck</option>
                       </select>
                     </div>
                     <div className="space-y-2">
@@ -512,10 +517,15 @@ const AdminDashboard = () => {
                   <label className="text-[10px] uppercase font-bold text-zinc-400 ml-1">Category</label>
                   <select className="w-full px-4 py-3 rounded-xl border border-zinc-200" value={newCar.category} onChange={e => setNewCar({...newCar, category: e.target.value as any})}>
                     <option value="Economy">Economy</option>
+                    <option value="Sedan">Sedan</option>
                     <option value="SUV">SUV</option>
+                    <option value="4x4">4x4</option>
                     <option value="Luxury">Luxury</option>
                     <option value="Van">Van</option>
-                    <option value="Truck">Truck</option>
+                    <option value="Bus">Bus</option>
+                    <option value="Minibus">Minibus</option>
+                    <option value="Coaster">Coaster</option>
+                    <option value="Pickup">Pickup / Truck</option>
                   </select>
                 </div>
                 <div className="flex gap-4">
@@ -1312,7 +1322,7 @@ const FleetGrid = ({ onBookCar }: { onBookCar: (car: Car) => void }) => {
   }, []);
 
   const allCars = [...FLEET, ...carsFromDb];
-  const categories = ['All', 'Economy', 'SUV', 'Luxury', 'Van', 'Truck'];
+  const categories = ['All', 'Economy', 'Sedan', 'SUV', '4x4', 'Luxury', 'Van', 'Bus', 'Minibus', 'Coaster', 'Pickup'];
 
   const filteredCars = allCars.filter(car => {
     const matchesSearch = car.name.toLowerCase().includes(searchQuery.toLowerCase());
