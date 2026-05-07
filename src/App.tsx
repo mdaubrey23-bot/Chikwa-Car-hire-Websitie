@@ -1236,11 +1236,11 @@ const CarSlideshow = ({ onGetQuote }: { onGetQuote: () => void }) => {
             <span className="text-brand-blue font-display font-black text-sm uppercase tracking-widest block mb-2">{car.category}</span>
             <h3 className="text-3xl font-display font-black text-zinc-900 uppercase mb-6">{car.name}</h3>
             <ul className="space-y-3 mb-8">
-              <li className="flex items-center gap-3 text-zinc-600"><span className="w-2 h-2 rounded-full bg-brand-blue flex-shrink-0"></span>{car.name}</li>
-              <li className="flex items-center gap-3 text-zinc-600"><span className="w-2 h-2 rounded-full bg-brand-blue flex-shrink-0"></span>{car.passengers} Seats</li>
-              <li className="flex items-center gap-3 text-zinc-600"><span className="w-2 h-2 rounded-full bg-brand-blue flex-shrink-0"></span>Automatic & Manual Transmission</li>
-              <li className="flex items-center gap-3 text-zinc-600"><span className="w-2 h-2 rounded-full bg-brand-blue flex-shrink-0"></span>Fully Insured</li>
-              <li className="flex items-center gap-3 text-zinc-600"><span className="w-2 h-2 rounded-full bg-brand-blue flex-shrink-0"></span>Chauffeur Service Available</li>
+              <li className="flex items-center gap-3 text-zinc-900"><span className="w-2 h-2 rounded-full bg-brand-blue flex-shrink-0"></span>{car.name}</li>
+              <li className="flex items-center gap-3 text-zinc-900"><span className="w-2 h-2 rounded-full bg-brand-blue flex-shrink-0"></span>{car.passengers} Seats</li>
+              <li className="flex items-center gap-3 text-zinc-900"><span className="w-2 h-2 rounded-full bg-brand-blue flex-shrink-0"></span>Automatic & Manual Transmission</li>
+              <li className="flex items-center gap-3 text-zinc-900"><span className="w-2 h-2 rounded-full bg-brand-blue flex-shrink-0"></span>Fully Insured</li>
+              <li className="flex items-center gap-3 text-zinc-900"><span className="w-2 h-2 rounded-full bg-brand-blue flex-shrink-0"></span>Chauffeur Service Available</li>
             </ul>
             <button
               onClick={onGetQuote}
@@ -1289,7 +1289,7 @@ const ServicesSection = () => {
                 {getIcon(service.icon)}
               </div>
               <h3 className="text-xl font-display font-bold text-brand-blue mb-3">{service.title}</h3>
-              <p className="text-gray-500 leading-relaxed font-light">{service.description}</p>
+              <p className="text-zinc-900 leading-relaxed">{service.description}</p>
             </motion.div>
           ))}
         </div>
@@ -2275,13 +2275,13 @@ export default function App() {
                 <div className="lg:w-1/2">
                   <span className="text-brand-orange font-display font-bold uppercase tracking-widest text-xs mb-4 block">Our Story</span>
                   <h2 className="text-4xl md:text-5xl font-display font-black text-brand-blue mb-8 leading-tight">About Chikwa</h2>
-                  <p className="text-gray-500 text-lg leading-relaxed mb-6 font-light">
+                  <p className="text-zinc-900 text-lg leading-relaxed mb-6">
                     {BRAND_STORY.introduction}
                   </p>
                   <div className="grid grid-cols-2 gap-8 mb-8">
                     <div>
                       <h4 className="font-display font-bold text-brand-orange uppercase text-xs tracking-widest mb-2">Our Vision</h4>
-                      <p className="text-sm text-zinc-600 italic">"{BRAND_STORY.vision}"</p>
+                      <p className="text-sm text-zinc-900 italic">"{BRAND_STORY.vision}"</p>
                     </div>
                     <div>
                       <h4 className="font-display font-bold text-brand-orange uppercase text-xs tracking-widest mb-2">Our Mission</h4>
@@ -2290,7 +2290,7 @@ export default function App() {
                   </div>
                   <div className="space-y-3">
                     {BRAND_STORY.values.map((v, i) => (
-                      <div key={i} className="flex items-center text-sm text-zinc-500">
+                      <div key={i} className="flex items-center text-sm text-zinc-900">
                         <CheckCircle2 size={16} className="text-brand-orange mr-3" />
                         {v}
                       </div>
@@ -2354,7 +2354,7 @@ export default function App() {
                       {item.icon === 'Smartphone' && <Smartphone size={32} />}
                     </div>
                     <h3 className="text-xl font-display font-bold text-brand-blue mb-3">{item.title}</h3>
-                    <p className="text-gray-500 font-light leading-relaxed">{item.description}</p>
+                    <p className="text-zinc-900 leading-relaxed">{item.description}</p>
                   </div>
                 ))}
               </div>
@@ -2376,7 +2376,7 @@ export default function App() {
                       <div className="flex text-brand-blue mb-6">
                         {[...Array(t.rating)].map((_, i) => <Star key={i} size={20} fill="#C41230" />)}
                       </div>
-                      <p className="text-lg italic font-light text-zinc-600 leading-relaxed mb-8">"{t.text}"</p>
+                      <p className="text-lg italic text-zinc-900 leading-relaxed mb-8">"{t.text}"</p>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-brand-blue flex items-center justify-center">
                           <span className="text-white text-xs font-black">{t.name[0]}</span>
@@ -2492,7 +2492,7 @@ const Footer = () => {
               </div>
               <span className="font-display font-black text-2xl tracking-tighter uppercase text-brand-blue">Chikwa Car Hire</span>
             </div>
-            <p className="text-zinc-500 font-light leading-relaxed">
+            <p className="text-zinc-900 leading-relaxed">
               {BRAND_STORY.introduction}
             </p>
             <div className="flex space-x-4">
@@ -2504,7 +2504,7 @@ const Footer = () => {
           
           <div>
             <h4 className="font-display font-bold uppercase tracking-widest text-xs mb-8 text-brand-blue">Quick Links</h4>
-            <ul className="space-y-4 text-sm text-zinc-500">
+            <ul className="space-y-4 text-sm text-zinc-900">
               <li><button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="hover:text-brand-blue transition-colors">Our Fleet</button></li>
               <li><a href="#" className="hover:text-brand-blue transition-colors">Services</a></li>
               <li><a href="#" className="hover:text-brand-blue transition-colors">Privacy Policy</a></li>
@@ -2514,7 +2514,7 @@ const Footer = () => {
           
           <div>
             <h4 className="font-display font-bold uppercase tracking-widest text-xs mb-8 text-brand-blue">Contact Us</h4>
-            <ul className="space-y-4 text-sm text-gray-400">
+            <ul className="space-y-4 text-sm text-zinc-900">
               <li className="flex items-start">
                 <MapPin size={16} className="mr-3 text-brand-gold shrink-0 mt-1" />
                 <span>Plot No 26 Bende Road,<br />Olympia Extension,<br />Lusaka, Zambia</span>
