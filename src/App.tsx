@@ -1036,8 +1036,9 @@ const FleetGrid = ({ onBookCar }: { onBookCar: (car: Car) => void }) => {
   );
 };
 
-const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (data: any) => void }) => {
-  const selectedCar = initialCar || FLEET[0];
+const QuoteFormCard = ({ initialCar, onSubmit, allCars = [] }: { initialCar?: Car, onSubmit: (data: any) => void, allCars?: Car[] }) => {
+  const carList = allCars.length > 0 ? allCars : FLEET;
+  const selectedCar = initialCar || carList[0];
   const [formData, setFormData] = useState({
     customerName: '',
     lastName: '',
@@ -1056,8 +1057,8 @@ const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (
     dropoffDate: '',
     dropoffTime: '08:00 AM',
     passengers: 1,
-    carId: initialCar?.id || FLEET[0]?.id || '',
-    carName: initialCar?.name || FLEET[0]?.name || '',
+    carId: initialCar?.id || carList[0]?.id || '',
+    carName: initialCar?.name || carList[0]?.name || '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -1120,15 +1121,11 @@ const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (
     <div className="max-w-4xl mx-auto">
       {/* Car preview header */}
       <div className="bg-white border border-zinc-200 rounded-2xl p-8 mb-8 flex flex-col md:flex-row items-center gap-8">
-        <div className="w-48 h-48 flex-shrink-0 flex items-center justify-center">
-          <div className="w-16 h-16 bg-brand-blue rounded-xl flex items-center justify-center">
-            <CarIcon size={32} className="text-white" />
-          </div>
-        </div>
-        <div className="flex-1">
+        <div className="flex-1 text-center md:text-left">
           {selectedCar && (
             <>
-              <img src={selectedCar.image} alt={selectedCar.name} className="h-40 object-contain mx-auto md:mx-0 mb-4" />
+              <h2 className="text-2xl font-display font-black text-brand-blue uppercase mb-4">Car Rental - Quotation {carList.find(c => c.id === formData.carId)?.name || selectedCar.name}</h2>
+              <img src={carList.find(c => c.id === formData.carId)?.image || selectedCar.image} alt={selectedCar.name} className="h-48 object-contain mx-auto mb-6" />
               <ul className="space-y-1">
                 <li className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>{selectedCar.name}</li>
                 <li className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>{selectedCar.passengers} Seats</li>
@@ -1147,10 +1144,10 @@ const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (
           <div className={rowClass}>
             <label className={labelClass}>Car Type <span className="text-brand-blue">*</span></label>
             <select name="carId" value={formData.carId} onChange={e => {
-              const car = FLEET.find(c => c.id === e.target.value);
+              const car = carList.find(c => c.id === e.target.value);
               setFormData(prev => ({ ...prev, carId: e.target.value, carName: car?.name || '' }));
             }} className={inputClass}>
-              {FLEET.map(car => <option key={car.id} value={car.id}>{car.name}</option>)}
+              {carList.map(car => <option key={car.id} value={car.id}>{car.name}</option>)}
             </select>
           </div>
 
@@ -2088,7 +2085,7 @@ export default function App() {
                   <h2 className="text-5xl font-display font-black text-brand-blue mb-4 uppercase">Instant Quote</h2>
                   <p className="text-zinc-400 font-medium">Get a professional itemised breakdown for your rental in seconds.</p>
                 </motion.div>
-                <QuoteFormCard initialCar={selectedCarForQuote} onSubmit={generateQuote} />
+                <QuoteFormCard initialCar={selectedCarForQuote} onSubmit={generateQuote} allCars={cars} />
               </div>
             )}
           </section>
