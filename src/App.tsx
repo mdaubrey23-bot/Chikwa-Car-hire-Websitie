@@ -77,7 +77,143 @@ const WhatsAppButton = () => (
     <MessageCircle size={28} />
   </a>
 );
+const AdminDocForm = ({ cars, onGenerate }: { cars: Car[], onGenerate: (q: QuoteData) => void }) => {
+  const carList = [...FLEET, ...cars];
+  const [form, setForm] = useState({
+    customerName: '', phone: '', email: '',
+    carId: carList[0]?.id || '',
+    pickupDate: '', dropoffDate: '',
+    pickupLocation: 'Lusaka International Airport',
+    dropoffLocation: 'Lusaka International Airport',
+    driveType: 'Self-drive',
+    destination: 'Within Lusaka',
+    extraDriver: false, extraInsurance: false, extraChildSeat: false,
+  });
 
+  const selectedCar = carList.find(c => c.id === form.carId) || carList[0];
+  const days = form.pickupDate && form.dropoffDate ? Math.max(1, differenceInDays(new Date(form.dropoffDate), new Date(form.pickupDate))) : 1;
+  const baseRate = (selectedCar?.pricePerDay || 0) * days;
+  const extrasCost = (form.extraDriver ? 250 * days : 0) + (form.extraInsurance ? 150 * days : 0) + (form.extraChildSeat ? 75 * days : 0);
+  const subtotal = baseRate + extrasCost;
+  const tax = subtotal * 0.16;
+  const total = subtotal + tax;
+  const inp = "w-full border border-zinc-200 rounded-xl px-4 py-3 text-sm text-zinc-700 outline-none focus:ring-2 focus:ring-brand-orange bg-white";
+
+  const handleGenerate = (e: React.FormEvent) => {
+    e.preventDefault();
+    const car = carList.find(c => c.id === form.carId) || carList[0];
+    const q: QuoteData = {
+      reference: `CCH-${format(new Date(),'yyyy')}-${Math.random().toString(36).substring(2,7).toUpperCase()}`,
+      customerName: form.customerName, phone: form.phone, email: form.email,
+      pickupLocation: form.pickupLocation, dropoffLocation: form.dropoffLocation,
+      pickupDateTime: `${form.pickupDate}T08:00`, dropoffDateTime: `${form.dropoffDate}T08:00`,
+      car, extras: { driver: form.extraDriver, insurance: form.extraInsurance, childSeat: form.extraChildSeat },
+      durationDays: days, baseRate, extrasCost, subtotal, tax, total,
+      validityDate: format(addDays(new Date(), 7), 'PP'),
+      createdAt: new Date().toISOString(),
+    };
+    onGenerate(q);
+    try { addDoc(collection(db, 'quotes'), { ...q, createdAt: serverTimestamp() }); } catch(e) {}
+  };
+
+  return (
+    <form onSubmit={handleGenerate} className="bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden">
+      <div className="bg-brand-blue px-8 py-6">
+        <h3 className="text-xl font-display font-black text-white uppercase tracking-tight">New Document</h3>
+        <p className="text-brand-orange text-xs font-bold uppercase tracking-widest mt-1">Fill in rental details to generate a quote</p>
+      </div>
+      <div className="p-8 grid md:grid-cols-2 gap-6">
+        <div className="md:col-span-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-4 border-b border-zinc-100 pb-2">Customer Information</p>
+          <div className="grid md:grid-cols-3 gap-4">
+            <div><label className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">Full Name *</label><input required className={inp} value={form.customerName} onChange={e => setForm({...form, customerName: e.target.value})} placeholder="e.g. John Banda" /></div>
+            <div><label className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">Phone *</label><input required className={inp} value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} placeholder="+260 977 ..." /></div>
+            <div><label className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">Email *</label><input required type="email" className={inp} value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="email@example.com" /></div>
+          </div>
+        </div>
+
+        <div className="md:col-span-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-4 border-b border-zinc-100 pb-2">Vehicle & Rental</p>
+          <div className="grid md:grid-cols-3 gap-4">
+            <div>
+              <label className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">Vehicle *</label>
+              <select required className={inp} value={form.carId} onChange={e => setForm({...form, carId: e.target.value})}>
+                {carList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            <div><label className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">Pick-up Date *</label><input required type="date" className={inp} value={form.pickupDate} onChange={e => setForm({...form, pickupDate: e.target.value})} /></div>
+            <div><label className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">Drop-off Date *</label><input required type="date" className={inp} value={form.dropoffDate} onChange={e => setForm({...form, dropoffDate: e.target.value})} /></div>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4 mt-4">
+            <div>
+              <label className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">Pick-up Location</label>
+              <select className={inp} value={form.pickupLocation} onChange={e => setForm({...form, pickupLocation: e.target.value})}>
+                <option>Lusaka International Airport</option><option>Lusaka City Centre</option><option>Levy Junction Mall</option><option>Manda Hill Mall</option><option>Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">Drop-off Location</label>
+              <select className={inp} value={form.dropoffLocation} onChange={e => setForm({...form, dropoffLocation: e.target.value})}>
+                <option>Lusaka International Airport</option><option>Lusaka City Centre</option><option>Levy Junction Mall</option><option>Manda Hill Mall</option><option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4 mt-4">
+            <div>
+              <label className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">Drive Type</label>
+              <select className={inp} value={form.driveType} onChange={e => setForm({...form, driveType: e.target.value, extraDriver: e.target.value === 'Chauffeur-driven'})}>
+                <option>Self-drive</option><option>Chauffeur-driven</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">Destination</label>
+              <select className={inp} value={form.destination} onChange={e => setForm({...form, destination: e.target.value})}>
+                <option>Within Lusaka</option><option>Outside Lusaka</option><option>Cross Border</option><option>Airport Transfer</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="md:col-span-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-4 border-b border-zinc-100 pb-2">Extras</p>
+          <div className="flex flex-wrap gap-4">
+            {[
+              { key: 'extraDriver', label: 'Professional Driver', price: '+ZMW 250/day' },
+              { key: 'extraInsurance', label: 'Extra Insurance', price: '+ZMW 150/day' },
+              { key: 'extraChildSeat', label: 'Child Seat', price: '+ZMW 75/day' },
+            ].map(ex => (
+              <label key={ex.key} className={`flex items-center gap-3 px-5 py-3 rounded-xl border-2 cursor-pointer transition-all ${(form as any)[ex.key] ? 'border-brand-blue bg-brand-blue/5' : 'border-zinc-200 bg-white'}`}>
+                <input type="checkbox" checked={(form as any)[ex.key]} onChange={e => setForm({...form, [ex.key]: e.target.checked})} className="accent-brand-blue w-4 h-4" />
+                <span className="text-xs font-bold text-brand-blue uppercase tracking-widest">{ex.label}</span>
+                <span className="text-[10px] font-bold text-zinc-400">{ex.price}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="md:col-span-2 bg-brand-blue rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            {selectedCar?.image && <img src={selectedCar.image} className="w-20 h-14 object-cover rounded-xl" />}
+            <div>
+              <p className="text-white font-display font-black uppercase text-lg">{selectedCar?.name}</p>
+              <p className="text-brand-orange text-xs font-bold uppercase tracking-widest">{days} day{days !== 1 ? 's' : ''} · ZMW {selectedCar?.pricePerDay?.toLocaleString()}/day</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-zinc-400 text-[10px] uppercase font-bold tracking-widest">Estimated Total (incl. VAT)</p>
+            <p className="text-3xl font-display font-black text-brand-orange">ZMW {total.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</p>
+          </div>
+        </div>
+
+        <div className="md:col-span-2">
+          <button type="submit" className="w-full bg-brand-blue text-white py-5 rounded-2xl font-display font-black uppercase tracking-widest text-lg hover:bg-brand-orange transition-all shadow-xl">
+            Generate Quote →
+          </button>
+        </div>
+      </div>
+    </form>
+  );
+};
 const AdminDashboard = () => {
   const [cars, setCars] = useState<Car[]>([]);
   const [quotes, setQuotes] = useState<any[]>([]);
