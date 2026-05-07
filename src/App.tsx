@@ -899,16 +899,12 @@ const FleetGrid = ({ onBookCar }: { onBookCar: (car: Car) => void }) => {
                   <li className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-1.5 h-1.5 rounded-full bg-brand-blue flex-shrink-0"></span>Automatic & Manual Transmission</li>
                   <li className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-1.5 h-1.5 rounded-full bg-brand-blue flex-shrink-0"></span>Fully Insured</li>
                 </ul>
-                <div className="border-t border-zinc-100 pt-4 flex items-center justify-between">
-                  <div>
-                    <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest block mb-1">Price/Day</span>
-                    <span className="text-2xl font-display font-black text-brand-blue leading-none">ZMW {car.pricePerDay.toLocaleString()}</span>
-                  </div>
+                <div className="border-t border-zinc-100 pt-4">
                   <button 
                     onClick={() => onBookCar(car)}
-                    className="bg-brand-blue text-white px-5 py-3 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-brand-orange transition-all shadow-lg active:scale-95"
+                    className="w-full bg-brand-blue text-white px-5 py-3 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-brand-orange transition-all shadow-lg active:scale-95"
                   >
-                    Get a Quote
+                    Get a Quotation
                   </button>
                 </div>
               </div>
