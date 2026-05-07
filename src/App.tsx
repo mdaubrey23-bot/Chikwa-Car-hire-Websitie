@@ -879,38 +879,36 @@ const FleetGrid = ({ onBookCar }: { onBookCar: (car: Car) => void }) => {
             transition={{ delay: index * 0.05 }}
             className="group"
           >
-            <div className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-zinc-100 card-hover h-full flex flex-col">
-              <div className="h-64 overflow-hidden relative">
+            <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-zinc-100 card-hover h-full flex flex-col">
+              <div className="px-6 pt-6 pb-2">
+                <span className="text-brand-blue font-display font-black text-lg uppercase tracking-widest">{car.category}</span>
+              </div>
+              <div className="h-52 overflow-hidden px-4">
                 <img 
                   src={car.image} 
                   alt={car.name} 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700" 
                   referrerPolicy="no-referrer"
                 />
-                <div className="absolute top-6 right-6 bg-brand-blue/90 backdrop-blur-md text-white px-5 py-2 rounded-full text-xs font-bold uppercase tracking-widest shadow-xl">
-                  {car.category}
-                </div>
               </div>
-              <div className="p-8 flex-grow">
-                <div className="flex justify-between items-start mb-6">
-                  <h3 className="text-2xl font-display font-black text-brand-blue uppercase leading-tight">{car.name}</h3>
-                </div>
-                <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-8 pb-8 border-b border-zinc-50">
-                  <div className="flex items-center"><Users size={14} className="mr-2 text-brand-orange" /> {car.passengers} Pax</div>
-                  <div className="flex items-center"><Briefcase size={14} className="mr-2 text-brand-orange" /> {car.luggage} Bags</div>
-                  <div className="flex items-center"><Settings size={14} className="mr-2 text-brand-orange" /> {car.transmission}</div>
-                  <div className="flex items-center"><ShieldCheck size={14} className="mr-2 text-brand-orange" /> Insured</div>
-                </div>
-                <div className="flex items-center justify-between mt-auto">
+              <div className="p-6 flex-grow border-t border-zinc-100">
+                <h3 className="text-xl font-display font-black text-zinc-900 uppercase leading-tight mb-4">{car.name}</h3>
+                <ul className="space-y-2 mb-6">
+                  <li className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-1.5 h-1.5 rounded-full bg-brand-blue flex-shrink-0"></span>{car.name}</li>
+                  <li className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-1.5 h-1.5 rounded-full bg-brand-blue flex-shrink-0"></span>{car.passengers} Seats</li>
+                  <li className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-1.5 h-1.5 rounded-full bg-brand-blue flex-shrink-0"></span>Automatic & Manual Transmission</li>
+                  <li className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-1.5 h-1.5 rounded-full bg-brand-blue flex-shrink-0"></span>Fully Insured</li>
+                </ul>
+                <div className="border-t border-zinc-100 pt-4 flex items-center justify-between">
                   <div>
-                    <span className="text-sm font-bold text-zinc-400 uppercase tracking-widest block mb-1">Price/Day</span>
-                    <span className="text-3xl font-display font-black text-brand-blue leading-none">ZMW {car.pricePerDay.toLocaleString()}</span>
+                    <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest block mb-1">Price/Day</span>
+                    <span className="text-2xl font-display font-black text-brand-blue leading-none">ZMW {car.pricePerDay.toLocaleString()}</span>
                   </div>
                   <button 
                     onClick={() => onBookCar(car)}
-                    className="bg-brand-orange text-white w-14 h-14 rounded-2xl flex items-center justify-center hover:bg-brand-blue transition-all shadow-lg shadow-brand-orange/20 active:scale-95 group/btn"
+                    className="bg-brand-blue text-white px-5 py-3 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-brand-orange transition-all shadow-lg active:scale-95"
                   >
-                    <ArrowRight size={24} className="group-hover/btn:translate-x-1 transition-transform" />
+                    Get a Quote
                   </button>
                 </div>
               </div>
