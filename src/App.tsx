@@ -2213,21 +2213,28 @@ export default function App() {
             </section>
 
             {/* Testimonials */}
-            <section className="py-24 text-white" style={{backgroundColor: '#C41230'}}>
+            <section className="py-24 bg-white border-t border-zinc-100">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <h2 className="text-4xl font-display font-bold mb-16">Client Testimonials</h2>
+                <span className="text-brand-blue font-display font-bold uppercase tracking-[0.3em] text-xs mb-4 block">What Our Clients Say</span>
+                <h2 className="text-4xl font-display font-bold text-zinc-900 mb-4">Client Testimonials</h2>
+                <div className="w-16 h-1 bg-brand-blue mx-auto mb-16"></div>
                 <div className="grid md:grid-cols-2 gap-12">
                   {TESTIMONIALS.map((t, i) => (
                     <motion.div 
                       key={i} 
                       whileInHover={{ y: -5 }}
-                      className="bg-white/5 border border-white/10 p-10 rounded-[2rem] text-left backdrop-blur-sm"
+                      className="bg-white border-2 border-zinc-100 hover:border-brand-blue p-10 rounded-[2rem] text-left shadow-sm hover:shadow-lg transition-all"
                     >
-                      <div className="flex text-brand-gold mb-6">
-                        {[...Array(t.rating)].map((_, i) => <Star key={i} size={20} fill="#D4AF37" />)}
+                      <div className="flex text-brand-blue mb-6">
+                        {[...Array(t.rating)].map((_, i) => <Star key={i} size={20} fill="#C41230" />)}
                       </div>
-                      <p className="text-xl italic font-light text-gray-300 leading-relaxed mb-8">"{t.text}"</p>
-                      <p className="font-display font-bold text-brand-gold text-sm tracking-widest uppercase">— {t.name}</p>
+                      <p className="text-lg italic font-light text-zinc-600 leading-relaxed mb-8">"{t.text}"</p>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-brand-blue flex items-center justify-center">
+                          <span className="text-white text-xs font-black">{t.name[0]}</span>
+                        </div>
+                        <p className="font-display font-bold text-brand-blue text-sm tracking-widest uppercase">— {t.name}</p>
+                      </div>
                     </motion.div>
                   ))}
                 </div>
