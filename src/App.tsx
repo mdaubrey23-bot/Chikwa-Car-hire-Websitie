@@ -81,10 +81,14 @@ const WhatsAppButton = () => (
 const AdminDashboard = () => {
   const [cars, setCars] = useState<Car[]>([]);
   const [quotes, setQuotes] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'fleet' | 'quotes' | 'availability'>('fleet');
+  const [activeTab, setActiveTab] = useState<'fleet' | 'quotes' | 'availability' | 'generate'>('fleet');
   const [editingCar, setEditingCar] = useState<Car | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [adminDocStep, setAdminDocStep] = useState<'form' | 'quote' | 'invoice' | 'receipt'>('form');
+  const [adminQuote, setAdminQuote] = useState<QuoteData | null>(null);
+  const [adminInvoice, setAdminInvoice] = useState<InvoiceData | null>(null);
+  const [adminReceipt, setAdminReceipt] = useState<ReceiptData | null>(null);
   const [newCar, setNewCar] = useState<Partial<Car>>({
     name: '', category: 'Economy', passengers: 5, luggage: 2,
     transmission: 'Automatic', pricePerDay: 800, image: '',
@@ -348,10 +352,10 @@ const AdminDashboard = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
         <h2 className="text-4xl font-display font-black text-brand-blue uppercase">Owner Dashboard</h2>
         <div className="flex bg-zinc-100 p-1 rounded-xl no-print flex-wrap gap-1">
-          {(['fleet', 'availability', 'quotes'] as const).map(tab => (
+          {(['fleet', 'availability', 'quotes', 'generate'] as const).map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               className={`px-5 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-brand-blue text-white shadow-lg' : 'text-zinc-500'}`}>
-              {tab === 'quotes' ? `Quotes (${quotes.length})` : tab === 'availability' ? 'Availability' : 'Fleet Manager'}
+              {tab === 'quotes' ? `Quotes (${quotes.length})` : tab === 'availability' ? 'Availability' : tab === 'generate' ? 'Generate Doc' : 'Fleet Manager'}
             </button>
           ))}
         </div>
