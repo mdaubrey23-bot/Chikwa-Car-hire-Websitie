@@ -81,10 +81,14 @@ const WhatsAppButton = () => (
 const AdminDashboard = () => {
   const [cars, setCars] = useState<Car[]>([]);
   const [quotes, setQuotes] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'fleet' | 'quotes' | 'availability'>('fleet');
+  const [activeTab, setActiveTab] = useState<'fleet' | 'quotes' | 'availability' | 'generate'>('fleet');
   const [editingCar, setEditingCar] = useState<Car | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [adminDocStep, setAdminDocStep] = useState<'form' | 'quote' | 'invoice' | 'receipt'>('form');
+  const [adminQuote, setAdminQuote] = useState<QuoteData | null>(null);
+  const [adminInvoice, setAdminInvoice] = useState<InvoiceData | null>(null);
+  const [adminReceipt, setAdminReceipt] = useState<ReceiptData | null>(null);
   const [newCar, setNewCar] = useState<Partial<Car>>({
     name: '', category: 'Economy', passengers: 5, luggage: 2,
     transmission: 'Automatic', pricePerDay: 800, image: '',
@@ -348,10 +352,10 @@ const AdminDashboard = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
         <h2 className="text-4xl font-display font-black text-brand-blue uppercase">Owner Dashboard</h2>
         <div className="flex bg-zinc-100 p-1 rounded-xl no-print flex-wrap gap-1">
-          {(['fleet', 'availability', 'quotes'] as const).map(tab => (
+          {(['fleet', 'availability', 'quotes', 'generate'] as const).map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               className={`px-5 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-brand-blue text-white shadow-lg' : 'text-zinc-500'}`}>
-              {tab === 'quotes' ? `Quotes (${quotes.length})` : tab === 'availability' ? 'Availability' : 'Fleet Manager'}
+              {tab === 'quotes' ? `Quotes (${quotes.length})` : tab === 'availability' ? 'Availability' : tab === 'generate' ? 'Generate Doc' : 'Fleet Manager'}
             </button>
           ))}
         </div>
@@ -557,6 +561,480 @@ const AdminDashboard = () => {
               );
             })}
           </div>
+        </div>
+      )}
+      {/* Generate Doc Tab */}
+      {activeTab === 'generate' && (
+        <div>
+          {/* Step indicator */}
+          <div className="flex items-center gap-2 mb-10 flex-wrap">
+            {(['form','quote','invoice','receipt'] as const).map((step, i) => (
+              <React.Fragment key={step}>
+                <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${adminDocStep === step ? 'bg-brand-blue text-white' : ['quote','invoice','receipt'].indexOf(adminDocStep) > ['quote','invoice','receipt'].indexOf(step) ? 'bg-green-100 text-green-600' : 'bg-zinc-100 text-zinc-400'}`}>
+                  {i+1}. {step === 'form' ? 'Details' : step.charAt(0).toUpperCase() + step.slice(1)}
+                </div>
+                {i < 3 && <ChevronRight size={14} className="text-zinc-300" />}
+              </React.Fragment>
+            ))}
+          </div>
+
+          {/* STEP 1 — Form */}
+          {adminDocStep === 'form' && (() => {
+            const carList = [...FLEET, ...cars];
+            const [form, setForm] = React.useState({
+              customerName: '', phone: '', email: '',
+              carId: carList[0]?.id || '',
+              pickupDate: '', dropoffDate: '',
+              pickupLocation: 'Lusaka International Airport',
+              dropoffLocation: 'Lusaka International Airport',
+              driveType: 'Self-drive',
+              destination: 'Within Lusaka',
+              extraDriver: false, extraInsurance: false, extraChildSeat: false,
+            });
+            const selectedCar = carList.find(c => c.id === form.carId) || carList[0];
+            const days = form.pickupDate && form.dropoffDate ? Math.max(1, differenceInDays(new Date(form.dropoffDate), new Date(form.pickupDate))) : 1;
+            const baseRate = (selectedCar?.pricePerDay || 0) * days;
+            const extrasCost = (form.extraDriver ? 250 * days : 0) + (form.extraInsurance ? 150 * days : 0) + (form.extraChildSeat ? 75 * days : 0);
+            const subtotal = baseRate + extrasCost;
+            const tax = subtotal * 0.16;
+            const total = subtotal + tax;
+            const inp = "w-full border border-zinc-200 rounded-xl px-4 py-3 text-sm text-zinc-700 outline-none focus:ring-2 focus:ring-brand-orange bg-white";
+
+            const handleGenerate = (e: React.FormEvent) => {
+              e.preventDefault();
+              const car = carList.find(c => c.id === form.carId) || carList[0];
+              const q: QuoteData = {
+                reference: `HU-${format(new Date(),'yyyy')}-${Math.random().toString(36).substring(7).toUpperCase()}`,
+                customerName: form.customerName, phone: form.phone, email: form.email,
+                pickupLocation: form.pickupLocation, dropoffLocation: form.dropoffLocation,
+                pickupDateTime: `${form.pickupDate}T08:00`, dropoffDateTime: `${form.dropoffDate}T08:00`,
+                car, extras: { driver: form.extraDriver, insurance: form.extraInsurance, childSeat: form.extraChildSeat },
+                durationDays: days, baseRate, extrasCost, subtotal, tax, total,
+                validityDate: format(addDays(new Date(), 7), 'PP'),
+                createdAt: new Date().toISOString(),
+              };
+              setAdminQuote(q);
+              setAdminDocStep('quote');
+              try { addDoc(collection(db, 'quotes'), { ...q, createdAt: serverTimestamp() }); } catch(e) {}
+            };
+
+            return (
+              <form onSubmit={handleGenerate} className="bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden">
+                <div className="bg-brand-blue px-8 py-6">
+                  <h3 className="text-xl font-display font-black text-white uppercase tracking-tight">New Document</h3>
+                  <p className="text-brand-orange text-xs font-bold uppercase tracking-widest mt-1">Fill in rental details to generate quote</p>
+                </div>
+                <div className="p-8 grid md:grid-cols-2 gap-6">
+                  {/* Customer */}
+                  <div className="md:col-span-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-4 border-b border-zinc-100 pb-2">Customer Information</p>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <div><label className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">Full Name *</label><input required className={inp} value={form.customerName} onChange={e => setForm({...form, customerName: e.target.value})} placeholder="e.g. John Banda" /></div>
+                      <div><label className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">Phone *</label><input required className={inp} value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} placeholder="+260 977 ..." /></div>
+                      <div><label className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">Email *</label><input required type="email" className={inp} value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="email@example.com" /></div>
+                    </div>
+                  </div>
+
+                  {/* Vehicle */}
+                  <div className="md:col-span-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-4 border-b border-zinc-100 pb-2">Vehicle & Rental</p>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">Vehicle *</label>
+                        <select required className={inp} value={form.carId} onChange={e => setForm({...form, carId: e.target.value})}>
+                          {carList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
+                      </div>
+                      <div><label className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">Pick-up Date *</label><input required type="date" className={inp} value={form.pickupDate} onChange={e => setForm({...form, pickupDate: e.target.value})} /></div>
+                      <div><label className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">Drop-off Date *</label><input required type="date" className={inp} value={form.dropoffDate} onChange={e => setForm({...form, dropoffDate: e.target.value})} /></div>
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4 mt-4">
+                      <div>
+                        <label className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">Pick-up Location</label>
+                        <select className={inp} value={form.pickupLocation} onChange={e => setForm({...form, pickupLocation: e.target.value})}>
+                          <option>Lusaka International Airport</option><option>Lusaka City Centre</option><option>Levy Junction Mall</option><option>Manda Hill Mall</option><option>Other</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">Drop-off Location</label>
+                        <select className={inp} value={form.dropoffLocation} onChange={e => setForm({...form, dropoffLocation: e.target.value})}>
+                          <option>Lusaka International Airport</option><option>Lusaka City Centre</option><option>Levy Junction Mall</option><option>Manda Hill Mall</option><option>Other</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-4 mt-4">
+                      <div>
+                        <label className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">Drive Type</label>
+                        <select className={inp} value={form.driveType} onChange={e => setForm({...form, driveType: e.target.value, extraDriver: e.target.value === 'Chauffeur-driven'})}>
+                          <option>Self-drive</option><option>Chauffeur-driven</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold uppercase text-zinc-400 block mb-1">Destination</label>
+                        <select className={inp} value={form.destination} onChange={e => setForm({...form, destination: e.target.value})}>
+                          <option>Within Lusaka</option><option>Outside Lusaka</option><option>Cross Border</option><option>Airport Transfer</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Extras */}
+                  <div className="md:col-span-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-4 border-b border-zinc-100 pb-2">Extras</p>
+                    <div className="flex flex-wrap gap-4">
+                      {[
+                        { key: 'extraDriver', label: 'Professional Driver', price: `+ZMW 250/day` },
+                        { key: 'extraInsurance', label: 'Extra Insurance', price: `+ZMW 150/day` },
+                        { key: 'extraChildSeat', label: 'Child Seat', price: `+ZMW 75/day` },
+                      ].map(ex => (
+                        <label key={ex.key} className={`flex items-center gap-3 px-5 py-3 rounded-xl border-2 cursor-pointer transition-all ${(form as any)[ex.key] ? 'border-brand-blue bg-brand-blue/5' : 'border-zinc-200 bg-white'}`}>
+                          <input type="checkbox" checked={(form as any)[ex.key]} onChange={e => setForm({...form, [ex.key]: e.target.checked})} className="accent-brand-blue w-4 h-4" />
+                          <span className="text-xs font-bold text-brand-blue uppercase tracking-widest">{ex.label}</span>
+                          <span className="text-[10px] font-bold text-zinc-400">{ex.price}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Live cost preview */}
+                  <div className="md:col-span-2 bg-brand-blue rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      {selectedCar?.image && <img src={selectedCar.image} className="w-20 h-14 object-cover rounded-xl" />}
+                      <div>
+                        <p className="text-white font-display font-black uppercase text-lg">{selectedCar?.name}</p>
+                        <p className="text-brand-orange text-xs font-bold uppercase tracking-widest">{days} day{days !== 1 ? 's' : ''} · ZMW {selectedCar?.pricePerDay?.toLocaleString()}/day</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-zinc-400 text-[10px] uppercase font-bold tracking-widest">Estimated Total (incl. VAT)</p>
+                      <p className="text-3xl font-display font-black text-brand-orange">ZMW {total.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</p>
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <button type="submit" className="w-full bg-brand-blue text-white py-5 rounded-2xl font-display font-black uppercase tracking-widest text-lg hover:bg-brand-orange transition-all shadow-xl">
+                      Generate Quote →
+                    </button>
+                  </div>
+                </div>
+              </form>
+            );
+          })()}
+
+          {/* STEP 2 — Quote Preview */}
+          {adminDocStep === 'quote' && adminQuote && (() => {
+            const sendWhatsApp = () => {
+              const msg = `*CHIKWA CAR HIRE LIMITED*\n*QUOTATION*\n\nRef: ${adminQuote.reference}\nDate: ${format(new Date(), 'PPP')}\n\nCustomer: ${adminQuote.customerName}\nPhone: ${adminQuote.phone}\nEmail: ${adminQuote.email}\n\nVehicle: ${adminQuote.car.name}\nPick-up: ${adminQuote.pickupLocation} — ${format(new Date(adminQuote.pickupDateTime), 'PPP')}\nDrop-off: ${adminQuote.dropoffLocation} — ${format(new Date(adminQuote.dropoffDateTime), 'PPP')}\nDuration: ${adminQuote.durationDays} day(s)\n\nBase Rate: ZMW ${adminQuote.baseRate.toFixed(2)}\nExtras: ZMW ${adminQuote.extrasCost.toFixed(2)}\nSubtotal: ZMW ${adminQuote.subtotal.toFixed(2)}\nVAT (16%): ZMW ${adminQuote.tax.toFixed(2)}\n*TOTAL: ZMW ${adminQuote.total.toLocaleString()}*\n\nValid until: ${adminQuote.validityDate}\n\nThank you for choosing Chikwa Car Hire!\n📞 +260 977 515759 | chikwacarhire@gmail.com`;
+              window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+            };
+            return (
+              <div>
+                {/* Branded Quote Card */}
+                <div id="admin-doc-print" className="bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden mb-6">
+                  {/* Header */}
+                  <div className="bg-brand-blue px-10 py-8 flex justify-between items-start">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-brand-orange rounded-xl flex items-center justify-center shadow-lg">
+                        <CarIcon size={28} className="text-white" />
+                      </div>
+                      <div>
+                        <h1 className="text-2xl font-display font-black text-white uppercase tracking-tight">Chikwa Car Hire</h1>
+                        <p className="text-brand-orange text-[10px] font-bold uppercase tracking-[0.3em]">Limited · Lusaka, Zambia</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-4xl font-display font-black text-white uppercase tracking-tighter">Quote</p>
+                      <p className="text-brand-orange font-mono text-xs mt-1">{adminQuote.reference}</p>
+                      <p className="text-zinc-400 text-[10px] mt-1">Valid until: {adminQuote.validityDate}</p>
+                    </div>
+                  </div>
+
+                  <div className="p-10">
+                    {/* Customer & Details */}
+                    <div className="grid md:grid-cols-2 gap-10 mb-10 pb-10 border-b border-zinc-100">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Quoted For</p>
+                        <p className="text-2xl font-display font-black text-brand-blue">{adminQuote.customerName}</p>
+                        <p className="text-zinc-500 text-sm mt-1">{adminQuote.phone}</p>
+                        <p className="text-zinc-500 text-sm">{adminQuote.email}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Prepared By</p>
+                        <p className="text-brand-blue font-bold">Chikwa Car Hire Limited</p>
+                        <p className="text-zinc-500 text-sm">Plot 26 Bende Road, Olympia</p>
+                        <p className="text-zinc-500 text-sm">Lusaka, Zambia</p>
+                        <p className="text-zinc-500 text-sm">+260 977 515759</p>
+                      </div>
+                    </div>
+
+                    {/* Vehicle Banner */}
+                    <div className="bg-zinc-50 rounded-2xl p-6 flex items-center gap-6 mb-10 border border-zinc-100">
+                      <img src={adminQuote.car.image} className="w-24 h-16 object-cover rounded-xl border border-zinc-200" />
+                      <div className="flex-1">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-1">{adminQuote.car.category}</p>
+                        <p className="text-xl font-display font-black text-brand-blue uppercase">{adminQuote.car.name}</p>
+                        <div className="flex flex-wrap gap-4 mt-2 text-xs font-bold text-zinc-500">
+                          <span>📍 {adminQuote.pickupLocation}</span>
+                          <span>→</span>
+                          <span>📍 {adminQuote.dropoffLocation}</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Duration</p>
+                        <p className="text-3xl font-display font-black text-brand-blue">{adminQuote.durationDays}</p>
+                        <p className="text-zinc-400 text-xs font-bold uppercase">day{adminQuote.durationDays !== 1 ? 's' : ''}</p>
+                      </div>
+                    </div>
+
+                    {/* Dates */}
+                    <div className="grid grid-cols-2 gap-6 mb-10">
+                      {[{label:'Pick-up', dt: adminQuote.pickupDateTime, loc: adminQuote.pickupLocation}, {label:'Drop-off', dt: adminQuote.dropoffDateTime, loc: adminQuote.dropoffLocation}].map(d => (
+                        <div key={d.label} className="bg-brand-blue/5 rounded-2xl p-5 border border-brand-blue/10">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-brand-blue mb-2">{d.label}</p>
+                          <p className="font-bold text-brand-blue">{format(new Date(d.dt), 'PPP')}</p>
+                          <p className="text-zinc-500 text-sm">{d.loc}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Cost Breakdown */}
+                    <div className="space-y-3 mb-10">
+                      <div className="flex justify-between text-sm py-3 border-b border-zinc-100"><span className="text-zinc-500 font-medium">Base Rental ({adminQuote.durationDays} days × ZMW {adminQuote.car.pricePerDay})</span><span className="font-mono font-bold text-zinc-700">ZMW {adminQuote.baseRate.toFixed(2)}</span></div>
+                      {adminQuote.extras.driver && <div className="flex justify-between text-sm py-3 border-b border-zinc-100"><span className="text-zinc-500">Professional Chauffeur</span><span className="font-mono font-bold text-zinc-700">ZMW 250.00</span></div>}
+                      {adminQuote.extras.insurance && <div className="flex justify-between text-sm py-3 border-b border-zinc-100"><span className="text-zinc-500">Extra Insurance</span><span className="font-mono font-bold text-zinc-700">ZMW {(150 * adminQuote.durationDays).toFixed(2)}</span></div>}
+                      {adminQuote.extras.childSeat && <div className="flex justify-between text-sm py-3 border-b border-zinc-100"><span className="text-zinc-500">Child Seat</span><span className="font-mono font-bold text-zinc-700">ZMW {(75 * adminQuote.durationDays).toFixed(2)}</span></div>}
+                      <div className="flex justify-between text-sm py-3 border-b border-zinc-100"><span className="text-zinc-500 font-medium">Subtotal</span><span className="font-mono font-bold text-zinc-700">ZMW {adminQuote.subtotal.toFixed(2)}</span></div>
+                      <div className="flex justify-between text-sm py-3 border-b border-zinc-100"><span className="text-zinc-500 font-medium">VAT (16%)</span><span className="font-mono font-bold text-zinc-700">ZMW {adminQuote.tax.toFixed(2)}</span></div>
+                      <div className="flex justify-between items-center pt-4">
+                        <span className="text-2xl font-display font-black text-brand-blue uppercase">Total</span>
+                        <span className="text-3xl font-display font-black text-brand-orange">ZMW {adminQuote.total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+                      </div>
+                    </div>
+
+                    {/* Footer note */}
+                    <div className="bg-zinc-50 rounded-xl p-5 text-xs text-zinc-400 font-medium border border-zinc-100">
+                      <p>This quote is valid for 7 days until <strong>{adminQuote.validityDate}</strong>. All prices are in Zambian Kwacha (ZMW) and inclusive of VAT.</p>
+                      <p className="mt-2">Chikwa Car Hire Limited · Plot 26 Bende Road, Olympia · Lusaka · +260 977 515759 · chikwacarhire@gmail.com</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-wrap gap-4 no-print">
+                  <button onClick={() => window.print()} className="flex items-center gap-2 bg-zinc-100 text-zinc-600 px-6 py-4 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-zinc-200"><Printer size={16}/> Save as PDF</button>
+                  <button onClick={sendWhatsApp} className="flex items-center gap-2 bg-[#25D366] text-white px-6 py-4 rounded-xl font-bold uppercase tracking-widest text-xs hover:opacity-90"><MessageCircle size={16}/> Send via WhatsApp</button>
+                  <button onClick={() => {
+                    if (!adminQuote) return;
+                    const inv: InvoiceData = { ...adminQuote, invoiceNumber: `INV-${format(new Date(),'yyyyMM')}-${Math.random().toString(36).substring(7).toUpperCase()}`, dueDate: format(addDays(new Date(),3),'PP'), status: 'UNPAID' };
+                    setAdminInvoice(inv);
+                    setAdminDocStep('invoice');
+                  }} className="flex items-center gap-2 bg-brand-blue text-white px-8 py-4 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-brand-orange transition-all shadow-lg"><FileText size={16}/> Convert to Invoice</button>
+                  <button onClick={() => { setAdminDocStep('form'); setAdminQuote(null); }} className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest underline underline-offset-4 px-2">Start Over</button>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* STEP 3 — Invoice Preview */}
+          {adminDocStep === 'invoice' && adminInvoice && (() => {
+            const sendWhatsApp = () => {
+              const msg = `*CHIKWA CAR HIRE LIMITED*\n*INVOICE #${adminInvoice.invoiceNumber}*\n\nDate: ${format(new Date(adminInvoice.createdAt),'PPP')}\nDue: ${adminInvoice.dueDate}\nStatus: ${adminInvoice.status}\n\nBilled To:\n${adminInvoice.customerName}\n${adminInvoice.phone}\n${adminInvoice.email}\n\nVehicle: ${adminInvoice.car.name}\nDuration: ${adminInvoice.durationDays} day(s)\n\nSubtotal: ZMW ${adminInvoice.subtotal.toFixed(2)}\nVAT (16%): ZMW ${adminInvoice.tax.toFixed(2)}\n*TOTAL DUE: ZMW ${adminInvoice.total.toLocaleString()}*\n\nPayment:\n🏦 ZANACO · Chikwa Car Hire Ltd · Acc: 5543 XXXX\n📱 Airtel: 0978 XXX XXX | MTN: 0968 XXX XXX\n\nChikwa Car Hire · +260 977 515759`;
+              window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+            };
+            return (
+              <div>
+                <div id="admin-doc-print" className="bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden mb-6">
+                  {/* Header */}
+                  <div className="bg-brand-blue px-10 py-8 flex justify-between items-start">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-brand-orange rounded-xl flex items-center justify-center shadow-lg">
+                        <CarIcon size={28} className="text-white" />
+                      </div>
+                      <div>
+                        <h1 className="text-2xl font-display font-black text-white uppercase tracking-tight">Chikwa Car Hire</h1>
+                        <p className="text-brand-orange text-[10px] font-bold uppercase tracking-[0.3em]">Limited · Lusaka, Zambia</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-4xl font-display font-black text-white uppercase tracking-tighter">Invoice</p>
+                      <p className="text-brand-orange font-mono text-xs mt-1">#{adminInvoice.invoiceNumber}</p>
+                      <span className={`mt-2 inline-block px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${adminInvoice.status === 'PAID' ? 'bg-green-400 text-white' : 'bg-brand-orange text-white'}`}>{adminInvoice.status}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-10">
+                    <div className="grid md:grid-cols-2 gap-10 mb-10 pb-10 border-b border-zinc-100">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Billed To</p>
+                        <p className="text-2xl font-display font-black text-brand-blue">{adminInvoice.customerName}</p>
+                        <p className="text-zinc-500 text-sm mt-1">{adminInvoice.phone}</p>
+                        <p className="text-zinc-500 text-sm">{adminInvoice.email}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Invoice Details</p>
+                        <p className="text-sm font-bold text-brand-blue">Date: <span className="font-medium text-zinc-500">{format(new Date(adminInvoice.createdAt),'PP')}</span></p>
+                        <p className="text-sm font-bold text-brand-blue">Due: <span className="font-medium text-zinc-500">{adminInvoice.dueDate}</span></p>
+                        <p className="text-sm font-bold text-brand-blue">Ref: <span className="font-mono text-zinc-500">{adminInvoice.reference}</span></p>
+                      </div>
+                    </div>
+
+                    {/* Line items */}
+                    <table className="w-full mb-10">
+                      <thead><tr className="border-b border-zinc-100"><th className="py-3 text-left text-[10px] font-black uppercase tracking-widest text-zinc-400">Description</th><th className="py-3 text-center text-[10px] font-black uppercase tracking-widest text-zinc-400">Days</th><th className="py-3 text-right text-[10px] font-black uppercase tracking-widest text-zinc-400">Rate</th><th className="py-3 text-right text-[10px] font-black uppercase tracking-widest text-zinc-400">Amount</th></tr></thead>
+                      <tbody className="text-sm">
+                        <tr className="border-b border-zinc-50"><td className="py-5 font-bold text-brand-blue">{adminInvoice.car.name}<p className="text-[10px] text-zinc-400 font-medium">{adminInvoice.car.category} Rental</p></td><td className="py-5 text-center text-zinc-500">{adminInvoice.durationDays}</td><td className="py-5 text-right font-mono text-zinc-500">ZMW {adminInvoice.car.pricePerDay.toFixed(2)}</td><td className="py-5 text-right font-bold font-mono text-brand-blue">ZMW {adminInvoice.baseRate.toFixed(2)}</td></tr>
+                        {adminInvoice.extras.driver && <tr className="border-b border-zinc-50"><td className="py-4 text-zinc-600">Chauffeur Service</td><td className="py-4 text-center text-zinc-400">1</td><td className="py-4 text-right font-mono text-zinc-400">250.00</td><td className="py-4 text-right font-bold font-mono text-brand-blue">ZMW 250.00</td></tr>}
+                        {adminInvoice.extras.insurance && <tr className="border-b border-zinc-50"><td className="py-4 text-zinc-600">Extra Insurance</td><td className="py-4 text-center text-zinc-400">{adminInvoice.durationDays}</td><td className="py-4 text-right font-mono text-zinc-400">150.00</td><td className="py-4 text-right font-bold font-mono text-brand-blue">ZMW {(150*adminInvoice.durationDays).toFixed(2)}</td></tr>}
+                        {adminInvoice.extras.childSeat && <tr className="border-b border-zinc-50"><td className="py-4 text-zinc-600">Child Seat</td><td className="py-4 text-center text-zinc-400">{adminInvoice.durationDays}</td><td className="py-4 text-right font-mono text-zinc-400">75.00</td><td className="py-4 text-right font-bold font-mono text-brand-blue">ZMW {(75*adminInvoice.durationDays).toFixed(2)}</td></tr>}
+                      </tbody>
+                    </table>
+
+                    <div className="flex justify-end mb-10">
+                      <div className="w-72 space-y-3">
+                        <div className="flex justify-between text-sm"><span className="text-zinc-400 font-medium">Subtotal</span><span className="font-mono font-bold">ZMW {adminInvoice.subtotal.toFixed(2)}</span></div>
+                        <div className="flex justify-between text-sm"><span className="text-zinc-400 font-medium">VAT (16%)</span><span className="font-mono font-bold">ZMW {adminInvoice.tax.toFixed(2)}</span></div>
+                        <div className="flex justify-between items-center pt-3 border-t-2 border-brand-blue/20">
+                          <span className="text-xl font-display font-black text-brand-blue">Total Due</span>
+                          <span className="text-2xl font-display font-black text-brand-orange">ZMW {adminInvoice.total.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Payment info */}
+                    <div className="bg-zinc-50 rounded-2xl p-6 border border-zinc-100">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-4">Payment Instructions</p>
+                      <div className="grid grid-cols-2 gap-6 text-xs font-bold text-brand-blue uppercase tracking-wider">
+                        <div><p className="text-zinc-400 mb-1">Bank Transfer</p><p>Chikwa Car Hire Limited</p><p>Zambia National Commercial Bank</p><p>Acc: 5543 XXXX XXXX</p></div>
+                        <div><p className="text-zinc-400 mb-1">Mobile Money</p><p>Airtel Money: 0978 XXX XXX</p><p>MTN Money: 0968 XXX XXX</p><p>Merchant Code: HUP88</p></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-4 no-print">
+                  <button onClick={() => window.print()} className="flex items-center gap-2 bg-zinc-100 text-zinc-600 px-6 py-4 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-zinc-200"><Printer size={16}/> Save as PDF</button>
+                  <button onClick={sendWhatsApp} className="flex items-center gap-2 bg-[#25D366] text-white px-6 py-4 rounded-xl font-bold uppercase tracking-widest text-xs hover:opacity-90"><MessageCircle size={16}/> Send via WhatsApp</button>
+                  {adminInvoice.status === 'UNPAID' && (() => {
+                    const [showPayModal, setShowPayModal] = React.useState(false);
+                    return (
+                      <>
+                        <button onClick={() => setShowPayModal(true)} className="flex items-center gap-2 bg-brand-orange text-white px-8 py-4 rounded-xl font-bold uppercase tracking-widest text-xs hover:opacity-90 shadow-lg"><CreditCard size={16}/> Mark as Paid</button>
+                        <AnimatePresence>
+                          {showPayModal && (
+                            <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+                              <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="absolute inset-0 bg-brand-blue/80 backdrop-blur-sm" onClick={() => setShowPayModal(false)} />
+                              <motion.div initial={{scale:0.9,opacity:0}} animate={{scale:1,opacity:1}} exit={{scale:0.9,opacity:0}} className="relative bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl">
+                                <h3 className="text-xl font-display font-black text-brand-blue mb-6 text-center uppercase">Select Payment Method</h3>
+                                <div className="space-y-3">
+                                  {(['Cash','Mobile Money','Bank Transfer'] as const).map(method => (
+                                    <button key={method} onClick={() => {
+                                      const rcp: ReceiptData = { ...adminInvoice, status:'PAID' as const, receiptNumber:`RCP-${format(new Date(),'HHmm')}-${Math.random().toString(36).substring(2,6).toUpperCase()}`, paymentDate: format(new Date(),'PP p'), paymentMethod: method };
+                                      setAdminReceipt(rcp);
+                                      setAdminInvoice({...adminInvoice, status:'PAID'});
+                                      setAdminDocStep('receipt');
+                                      setShowPayModal(false);
+                                    }} className="w-full py-4 border-2 border-zinc-100 rounded-2xl font-bold text-brand-blue hover:border-brand-orange hover:bg-brand-orange/5 transition-all flex justify-between items-center px-6">
+                                      <span>{method}</span><ChevronRight size={16}/>
+                                    </button>
+                                  ))}
+                                </div>
+                              </motion.div>
+                            </div>
+                          )}
+                        </AnimatePresence>
+                      </>
+                    );
+                  })()}
+                  <button onClick={() => { setAdminDocStep('form'); setAdminQuote(null); setAdminInvoice(null); }} className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest underline underline-offset-4 px-2">Start Over</button>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* STEP 4 — Receipt */}
+          {adminDocStep === 'receipt' && adminReceipt && (() => {
+            const sendWhatsApp = () => {
+              const msg = `*CHIKWA CAR HIRE LIMITED*\n*PAYMENT RECEIPT*\n✅ PAID\n\nReceipt No: ${adminReceipt.receiptNumber}\nDate: ${adminReceipt.paymentDate}\nMethod: ${adminReceipt.paymentMethod}\n\nCustomer: ${adminReceipt.customerName}\nVehicle: ${adminReceipt.car.name}\nDuration: ${adminReceipt.durationDays} day(s)\n\n*AMOUNT PAID: ZMW ${adminReceipt.total.toLocaleString()}*\n\nThank you for choosing Chikwa Car Hire!\nWe hope you have a wonderful journey. 🙏\n\n📞 +260 977 515759`;
+              window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+            };
+            return (
+              <div>
+                <div id="admin-doc-print" className="bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden mb-6">
+                  {/* Header */}
+                  <div className="bg-brand-blue px-10 py-8 flex justify-between items-start">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-brand-orange rounded-xl flex items-center justify-center shadow-lg">
+                        <CarIcon size={28} className="text-white" />
+                      </div>
+                      <div>
+                        <h1 className="text-2xl font-display font-black text-white uppercase tracking-tight">Chikwa Car Hire</h1>
+                        <p className="text-brand-orange text-[10px] font-bold uppercase tracking-[0.3em]">Limited · Lusaka, Zambia</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-4xl font-display font-black text-white uppercase tracking-tighter">Receipt</p>
+                      <p className="text-brand-orange font-mono text-xs mt-1">#{adminReceipt.receiptNumber}</p>
+                      <span className="mt-2 inline-block bg-green-400 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">PAID</span>
+                    </div>
+                  </div>
+
+                  <div className="p-10">
+                    {/* Big paid stamp */}
+                    <div className="text-center mb-10">
+                      <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                        <CheckCircle2 size={48} className="text-green-500" />
+                      </div>
+                      <h2 className="text-4xl font-display font-black text-brand-blue uppercase">Payment Confirmed</h2>
+                      <p className="text-zinc-400 mt-2">{adminReceipt.paymentDate}</p>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-10 mb-10 pb-10 border-b border-zinc-100">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Received From</p>
+                        <p className="text-2xl font-display font-black text-brand-blue">{adminReceipt.customerName}</p>
+                        <p className="text-zinc-500 text-sm mt-1">{adminReceipt.phone}</p>
+                        <p className="text-zinc-500 text-sm">{adminReceipt.email}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Payment Details</p>
+                        <p className="text-sm font-bold text-brand-blue">Method: <span className="font-medium text-zinc-500">{adminReceipt.paymentMethod}</span></p>
+                        <p className="text-sm font-bold text-brand-blue">Date: <span className="font-medium text-zinc-500">{adminReceipt.paymentDate}</span></p>
+                        <p className="text-sm font-bold text-brand-blue">Invoice Ref: <span className="font-mono text-zinc-500">{adminReceipt.invoiceNumber}</span></p>
+                      </div>
+                    </div>
+
+                    <div className="bg-brand-blue rounded-2xl p-6 flex items-center justify-between mb-10">
+                      <div className="flex items-center gap-4">
+                        <img src={adminReceipt.car.image} className="w-20 h-14 object-cover rounded-xl border border-white/20" />
+                        <div>
+                          <p className="text-white font-display font-black uppercase text-lg">{adminReceipt.car.name}</p>
+                          <p className="text-brand-orange text-xs font-bold uppercase">{adminReceipt.durationDays} day{adminReceipt.durationDays !== 1 ? 's' : ''} · {adminReceipt.pickupLocation} → {adminReceipt.dropoffLocation}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-zinc-400 text-[10px] uppercase font-bold">Amount Paid</p>
+                        <p className="text-3xl font-display font-black text-brand-orange">ZMW {adminReceipt.total.toLocaleString()}</p>
+                      </div>
+                    </div>
+
+                    <div className="text-center">
+                      <div className="inline-block border-4 border-brand-orange rounded-2xl px-12 py-4 rotate-[-2deg] mb-6">
+                        <p className="text-brand-orange font-display font-black uppercase tracking-[0.3em] text-2xl">PAID IN FULL</p>
+                      </div>
+                      <p className="text-zinc-400 text-sm italic font-light">"Thank you for choosing Chikwa Car Hire Limited. We hope you have a safe and wonderful journey."</p>
+                      <p className="text-zinc-300 text-xs mt-4">Chikwa Car Hire Limited · Plot 26 Bende Road, Olympia · Lusaka · +260 977 515759</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-4 no-print">
+                  <button onClick={() => window.print()} className="flex items-center gap-2 bg-zinc-100 text-zinc-600 px-6 py-4 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-zinc-200"><Printer size={16}/> Save as PDF</button>
+                  <button onClick={sendWhatsApp} className="flex items-center gap-2 bg-[#25D366] text-white px-6 py-4 rounded-xl font-bold uppercase tracking-widest text-xs hover:opacity-90"><MessageCircle size={16}/> Send via WhatsApp</button>
+                  <button onClick={() => { setAdminDocStep('form'); setAdminQuote(null); setAdminInvoice(null); setAdminReceipt(null); }} className="flex items-center gap-2 bg-brand-blue text-white px-6 py-4 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-brand-orange transition-all"><ArrowRight size={16}/> New Document</button>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
 
