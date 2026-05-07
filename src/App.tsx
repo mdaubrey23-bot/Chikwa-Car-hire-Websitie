@@ -2098,7 +2098,7 @@ export default function App() {
                 <div className="lg:w-1/2 relative">
                   <div className="absolute -top-10 -left-10 w-40 h-40 bg-brand-gold/10 rounded-full blur-3xl" />
                   <img 
-                    src="https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?q=80&w=2670&auto=format&fit=crop" 
+                    src="/pajero.jpg" 
                     alt="Corporate Office" 
                     className="rounded-[3rem] shadow-2xl relative z-10"
                     referrerPolicy="no-referrer"
