@@ -1057,6 +1057,7 @@ const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (
     dropoffTime: '08:00 AM',
     passengers: 1,
     carId: initialCar?.id || FLEET[0]?.id || '',
+    carName: initialCar?.name || FLEET[0]?.name || '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -1069,9 +1070,37 @@ const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const name = `${formData.customerName} ${formData.lastName}`.trim();
+    const message = 
+`*CHIKWA CAR HIRE - QUOTATION REQUEST*
+
+*Customer:* ${name}
+*Phone:* ${formData.phone}
+*Email:* ${formData.email}
+
+*Car Type:* ${formData.carName || formData.carId}
+*Passengers:* ${formData.passengers}
+*Destination:* ${formData.destination}
+*Drive Type:* ${formData.driveType}
+*GPS Navigation:* ${formData.gpsNavigation ? 'Yes' : 'No'}
+
+*Pick-up Location:* ${formData.pickupLocation}
+*Pick-up Date:* ${formData.pickupDate}
+*Pick-up Time:* ${formData.pickupTime}
+
+*Drop-off Location:* ${formData.dropoffLocation}
+*Drop-off Date:* ${formData.dropoffDate}
+*Drop-off Time:* ${formData.dropoffTime}
+
+*Age Group:* ${formData.ageGroup}
+*Message:* ${formData.comments || 'None'}`;
+
+    const whatsappUrl = `https://wa.me/260977515759?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+
     onSubmit({
       ...formData,
-      customerName: `${formData.customerName} ${formData.lastName}`.trim(),
+      customerName: name,
       pickupDateTime: `${formData.pickupDate}T08:00`,
       dropoffDateTime: `${formData.dropoffDate}T08:00`,
       pickupLocation: formData.pickupLocation,
@@ -1117,7 +1146,10 @@ const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (
 
           <div className={rowClass}>
             <label className={labelClass}>Car Type <span className="text-brand-blue">*</span></label>
-            <select name="carId" value={formData.carId} onChange={handleChange} className={inputClass}>
+            <select name="carId" value={formData.carId} onChange={e => {
+              const car = FLEET.find(c => c.id === e.target.value);
+              setFormData(prev => ({ ...prev, carId: e.target.value, carName: car?.name || '' }));
+            }} className={inputClass}>
               {FLEET.map(car => <option key={car.id} value={car.id}>{car.name}</option>)}
             </select>
           </div>
