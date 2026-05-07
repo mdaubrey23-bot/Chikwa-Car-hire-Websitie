@@ -1954,7 +1954,7 @@ export default function App() {
             {/* Clienteles & Bankers */}
             <section className="py-24 bg-zinc-50">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid lg:grid-cols-2 gap-16">
+                <div className="grid lg:grid-cols-1 gap-16">
                   {/* Clients */}
                   <div className="bg-brand-blue/5 p-12 rounded-[3rem] border border-brand-blue/10">
                     <h3 className="text-2xl font-display font-black text-brand-blue uppercase tracking-tighter mb-8 flex items-center">
