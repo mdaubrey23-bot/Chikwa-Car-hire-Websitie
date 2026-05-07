@@ -2103,10 +2103,7 @@ export default function App() {
                     className="rounded-[3rem] shadow-2xl relative z-10"
                     referrerPolicy="no-referrer"
                   />
-                  <div className="absolute -bottom-10 -right-10 bg-brand-blue p-8 rounded-3xl shadow-xl z-20 hidden md:block">
-                    <p className="text-3xl font-display font-black text-brand-gold">15+</p>
-                    <p className="text-white text-xs font-bold uppercase tracking-widest mt-2">Years of Excellence</p>
-                  </div>
+                  
                 </div>
                 <div className="lg:w-1/2">
                   <span className="text-brand-orange font-display font-bold uppercase tracking-widest text-xs mb-4 block">Our Story</span>
