@@ -628,11 +628,11 @@ const Navbar = ({ currentPage, onPageChange, user, onLogout }: { currentPage: Pa
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
           <div className="flex items-center cursor-pointer" onClick={() => onPageChange(Page.HOME)}>
-            <div className="w-10 h-10 bg-brand-orange rounded-lg flex items-center justify-center mr-3">
+            <div className="w-10 h-10 bg-brand-blue rounded-lg flex items-center justify-center mr-3">
               <CarIcon className="text-white" size={24} />
             </div>
             <div>
-              <span className="font-display font-bold text-2xl tracking-tight leading-none block uppercase">Chikwa Car Hire</span>
+              <span className="font-display font-bold text-2xl tracking-tight leading-none block uppercase text-brand-blue">Chikwa Car Hire</span>
               <span className="text-xs text-brand-blue uppercase tracking-[0.2em] font-bold block">Limited · Lusaka, Zambia</span>
             </div>
           </div>
@@ -1970,35 +1970,7 @@ export default function App() {
                     </div>
                   </div>
                   
-                  {/* Bankers */}
-                  <div className="bg-brand-orange/5 p-12 rounded-[3rem] border border-brand-orange/10">
-                    <h3 className="text-2xl font-display font-black text-brand-orange uppercase tracking-tighter mb-8 flex items-center">
-                      <div className="w-2 h-8 bg-brand-blue mr-3"></div>
-                      Our Bankers
-                    </h3>
-                    <div className="space-y-6">
-                      <div className="bg-white p-6 rounded-3xl shadow-sm border border-zinc-100 flex items-center justify-between">
-                        <div>
-                          <p className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] mb-1">Bank Name</p>
-                          <p className="text-lg font-display font-bold text-brand-blue">ATLAS MARA</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[10px] font-black uppercase text-brand-orange tracking-[0.2em] mb-1">Acc No</p>
-                          <p className="font-mono text-xs font-bold text-zinc-500">0335952951018-ZMW</p>
-                        </div>
-                      </div>
-                      <div className="bg-white p-6 rounded-3xl shadow-sm border border-zinc-100 flex items-center justify-between">
-                        <div>
-                          <p className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] mb-1">Bank Name</p>
-                          <p className="text-lg font-display font-bold text-brand-blue">FNB BANK</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[10px] font-black uppercase text-brand-orange tracking-[0.2em] mb-1">Acc No</p>
-                          <p className="font-mono text-xs font-bold text-zinc-500">62891674759</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  
                 </div>
               </div>
             </section>
