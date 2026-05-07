@@ -2098,8 +2098,8 @@ export default function App() {
                 <div className="lg:w-1/2 relative">
                   <div className="absolute -top-10 -left-10 w-40 h-40 bg-brand-gold/10 rounded-full blur-3xl" />
                   <img 
-                    src="/pajero.jpg" 
-                    alt="Corporate Office" 
+                    src="/pajero.jpg.jpeg" 
+                    alt="Mitsubishi Pajero - Chikwa Car Hire" 
                     className="rounded-[3rem] shadow-2xl relative z-10"
                     referrerPolicy="no-referrer"
                   />
@@ -2350,10 +2350,10 @@ const Footer = () => {
           <div>
             <h4 className="font-display font-bold uppercase tracking-widest text-xs mb-8 text-brand-blue">Quick Links</h4>
             <ul className="space-y-4 text-sm text-zinc-500">
-              <li><button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="hover:text-white transition-colors">Our Fleet</button></li>
-              <li><a href="#" className="hover:text-white transition-colors">Services</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
+              <li><button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="hover:text-brand-blue transition-colors">Our Fleet</button></li>
+              <li><a href="#" className="hover:text-brand-blue transition-colors">Services</a></li>
+              <li><a href="#" className="hover:text-brand-blue transition-colors">Privacy Policy</a></li>
+              <li><a href="#" className="hover:text-brand-blue transition-colors">Terms of Service</a></li>
             </ul>
           </div>
           
