@@ -778,7 +778,7 @@ const Hero = ({ onGetQuote }: { onGetQuote: () => void }) => {
   );
 };
 
-const CarSlideshow = () => {
+const CarSlideshow = ({ onGetQuote }: { onGetQuote: () => void }) => {
   const [carsFromDb, setCarsFromDb] = useState<Car[]>([]);
   const [current, setCurrent] = useState(0);
 
@@ -880,10 +880,10 @@ const CarSlideshow = () => {
               <li className="flex items-center gap-3 text-zinc-600"><span className="w-2 h-2 rounded-full bg-brand-blue flex-shrink-0"></span>Chauffeur Service Available</li>
             </ul>
             <button
-              onClick={() => window.location.href = '/#quote'}
+              onClick={onGetQuote}
               className="bg-brand-blue text-white px-10 py-4 rounded-xl font-display font-bold uppercase tracking-widest hover:bg-brand-orange transition-all shadow-lg"
             >
-              Book a Vehicle
+              Get a Quotation
             </button>
           </motion.div>
         </AnimatePresence>
@@ -1918,7 +1918,7 @@ export default function App() {
                   <div className="w-16 h-1 bg-brand-blue mx-auto mb-6"></div>
                   <p className="text-zinc-500 max-w-xl mx-auto text-lg font-light">Rent a car from our diversified fleet at affordable rates. Choose from 4x4s, Sedans, Vans or Luxury Cars.</p>
                 </div>
-                <CarSlideshow />
+                <CarSlideshow onGetQuote={() => setCurrentPage(Page.QUOTE)} />
               </div>
             </section>
 
