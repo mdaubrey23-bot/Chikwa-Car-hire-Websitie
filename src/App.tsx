@@ -594,7 +594,7 @@ const AdminDashboard = () => {
                     </div>
                     <div className="p-5">
                       <h4 className="font-display font-black text-brand-blue text-lg uppercase leading-tight mb-1">{car.name}</h4>
-                      <p className="text-xs text-zinc-400 font-bold uppercase tracking-widest mb-4">{car.category} • {car.passengers} Pax • ZMW {car.pricePerDay?.toLocaleString()}/day</p>
+                      <p className="text-xs text-brand-blue font-bold uppercase tracking-widest mb-4">{car.category} • {car.passengers} Pax • ZMW {car.pricePerDay?.toLocaleString()}/day</p>
                       <div className="flex gap-2">
                         <button
                           onClick={() => openEdit(car)}
@@ -1371,10 +1371,10 @@ const FleetGrid = ({ onBookCar }: { onBookCar: (car: Car) => void }) => {
               <div className="p-6 flex-grow border-t border-zinc-100">
                 <h3 className="text-xl font-display font-black text-zinc-900 uppercase leading-tight mb-4">{car.name}</h3>
                 <ul className="space-y-2 mb-6">
-                  <li className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-1.5 h-1.5 rounded-full bg-brand-blue flex-shrink-0"></span>{car.name}</li>
-                  <li className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-1.5 h-1.5 rounded-full bg-brand-blue flex-shrink-0"></span>{car.passengers} Seats</li>
-                  <li className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-1.5 h-1.5 rounded-full bg-brand-blue flex-shrink-0"></span>Automatic & Manual Transmission</li>
-                  <li className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-1.5 h-1.5 rounded-full bg-brand-blue flex-shrink-0"></span>Fully Insured</li>
+                  <li className="flex items-center gap-2 text-sm text-brand-blue"><span className="w-1.5 h-1.5 rounded-full bg-brand-blue flex-shrink-0"></span>{car.name}</li>
+                  <li className="flex items-center gap-2 text-sm text-brand-blue"><span className="w-1.5 h-1.5 rounded-full bg-brand-blue flex-shrink-0"></span>{car.passengers} Seats</li>
+                  <li className="flex items-center gap-2 text-sm text-brand-blue"><span className="w-1.5 h-1.5 rounded-full bg-brand-blue flex-shrink-0"></span>Automatic & Manual Transmission</li>
+                  <li className="flex items-center gap-2 text-sm text-brand-blue"><span className="w-1.5 h-1.5 rounded-full bg-brand-blue flex-shrink-0"></span>Fully Insured</li>
                 </ul>
                 <div className="border-t border-zinc-100 pt-4">
                   <button 
@@ -1490,10 +1490,10 @@ const QuoteFormCard = ({ initialCar, onSubmit, allCars = [] }: { initialCar?: Ca
               <h2 className="text-2xl font-display font-black text-brand-blue uppercase mb-4">Car Rental - Quotation {carList.find(c => c.id === formData.carId)?.name || selectedCar.name}</h2>
               <img src={carList.find(c => c.id === formData.carId)?.image || selectedCar.image} alt={selectedCar.name} className="h-48 object-contain mx-auto mb-6" />
               <ul className="space-y-1">
-                <li className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>{selectedCar.name}</li>
-                <li className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>{selectedCar.passengers} Seats</li>
-                <li className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>Automatic & Manual Transmission</li>
-                <li className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>Fully Insured</li>
+                <li className="flex items-center gap-2 text-sm text-brand-blue"><span className="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>{selectedCar.name}</li>
+                <li className="flex items-center gap-2 text-sm text-brand-blue"><span className="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>{selectedCar.passengers} Seats</li>
+                <li className="flex items-center gap-2 text-sm text-brand-blue"><span className="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>Automatic & Manual Transmission</li>
+                <li className="flex items-center gap-2 text-sm text-brand-blue"><span className="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>Fully Insured</li>
               </ul>
             </>
           )}
