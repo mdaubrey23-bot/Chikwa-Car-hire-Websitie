@@ -2127,7 +2127,7 @@ const Footer = () => {
               <div className="w-8 h-8 bg-brand-orange rounded flex items-center justify-center mr-3">
                 <CarIcon size={20} className="text-white" />
               </div>
-              <span className="font-display font-black text-2xl tracking-tighter uppercase text-zinc-900">Chikwa</span>
+              <span className="font-display font-black text-2xl tracking-tighter uppercase text-brand-blue">Chikwa Car Hire</span>
             </div>
             <p className="text-zinc-500 font-light leading-relaxed">
               {BRAND_STORY.introduction}
