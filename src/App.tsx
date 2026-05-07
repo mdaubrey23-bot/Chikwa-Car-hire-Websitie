@@ -559,6 +559,231 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+      {/* Generate Doc Tab */}
+      {activeTab === 'generate' && (
+        <div>
+          {/* Step indicator */}
+          <div className="flex items-center gap-2 mb-10 flex-wrap">
+            {(['form','quote','invoice','receipt'] as const).map((step, i) => (
+              <React.Fragment key={step}>
+                <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${adminDocStep === step ? 'bg-brand-blue text-white' : 'bg-zinc-100 text-zinc-400'}`}>
+                  {i+1}. {step === 'form' ? 'Details' : step.charAt(0).toUpperCase() + step.slice(1)}
+                </div>
+                {i < 3 && <ChevronRight size={14} className="text-zinc-300" />}
+              </React.Fragment>
+            ))}
+          </div>
+
+          {adminDocStep === 'form' && (
+            <AdminDocForm cars={cars} onGenerate={(q) => { setAdminQuote(q); setAdminDocStep('quote'); }} />
+          )}
+
+          {adminDocStep === 'quote' && adminQuote && (
+            <div>
+              <div className="bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden mb-6">
+                <div className="bg-brand-blue px-10 py-8 flex justify-between items-start">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-brand-orange rounded-xl flex items-center justify-center shadow-lg"><CarIcon size={28} className="text-white" /></div>
+                    <div>
+                      <h1 className="text-2xl font-display font-black text-white uppercase tracking-tight">Chikwa Car Hire</h1>
+                      <p className="text-brand-orange text-[10px] font-bold uppercase tracking-[0.3em]">Limited · Lusaka, Zambia</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-4xl font-display font-black text-white uppercase">Quote</p>
+                    <p className="text-brand-orange font-mono text-xs mt-1">{adminQuote.reference}</p>
+                    <p className="text-zinc-400 text-[10px] mt-1">Valid until: {adminQuote.validityDate}</p>
+                  </div>
+                </div>
+                <div className="p-10">
+                  <div className="grid md:grid-cols-2 gap-10 mb-10 pb-10 border-b border-zinc-100">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Quoted For</p>
+                      <p className="text-2xl font-display font-black text-brand-blue">{adminQuote.customerName}</p>
+                      <p className="text-zinc-500 text-sm mt-1">{adminQuote.phone}</p>
+                      <p className="text-zinc-500 text-sm">{adminQuote.email}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Prepared By</p>
+                      <p className="text-brand-blue font-bold">Chikwa Car Hire Limited</p>
+                      <p className="text-zinc-500 text-sm">Plot 26 Bende Road, Olympia</p>
+                      <p className="text-zinc-500 text-sm">+260 977 515759</p>
+                    </div>
+                  </div>
+                  <div className="space-y-3 mb-10">
+                    <div className="flex justify-between text-sm py-3 border-b border-zinc-100"><span className="text-zinc-500">Base Rental ({adminQuote.durationDays} days × ZMW {adminQuote.car.pricePerDay})</span><span className="font-mono font-bold">ZMW {adminQuote.baseRate.toFixed(2)}</span></div>
+                    {adminQuote.extras.driver && <div className="flex justify-between text-sm py-3 border-b border-zinc-100"><span className="text-zinc-500">Professional Chauffeur</span><span className="font-mono font-bold">ZMW {(250*adminQuote.durationDays).toFixed(2)}</span></div>}
+                    {adminQuote.extras.insurance && <div className="flex justify-between text-sm py-3 border-b border-zinc-100"><span className="text-zinc-500">Extra Insurance</span><span className="font-mono font-bold">ZMW {(150*adminQuote.durationDays).toFixed(2)}</span></div>}
+                    {adminQuote.extras.childSeat && <div className="flex justify-between text-sm py-3 border-b border-zinc-100"><span className="text-zinc-500">Child Seat</span><span className="font-mono font-bold">ZMW {(75*adminQuote.durationDays).toFixed(2)}</span></div>}
+                    <div className="flex justify-between text-sm py-3 border-b border-zinc-100"><span className="text-zinc-500">Subtotal</span><span className="font-mono font-bold">ZMW {adminQuote.subtotal.toFixed(2)}</span></div>
+                    <div className="flex justify-between text-sm py-3 border-b border-zinc-100"><span className="text-zinc-500">VAT (16%)</span><span className="font-mono font-bold">ZMW {adminQuote.tax.toFixed(2)}</span></div>
+                    <div className="flex justify-between items-center pt-4">
+                      <span className="text-2xl font-display font-black text-brand-blue uppercase">Total</span>
+                      <span className="text-3xl font-display font-black text-brand-orange">ZMW {adminQuote.total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+                    </div>
+                  </div>
+                  <div className="bg-zinc-50 rounded-xl p-5 text-xs text-zinc-400 border border-zinc-100">
+                    <p>This quote is valid for 7 days until <strong>{adminQuote.validityDate}</strong>. All prices are in Zambian Kwacha (ZMW) inclusive of VAT.</p>
+                    <p className="mt-2">Chikwa Car Hire Limited · Plot 26 Bende Road, Olympia · Lusaka · +260 977 515759 · chikwacarhire@gmail.com</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-4">
+                <button onClick={() => window.print()} className="flex items-center gap-2 bg-zinc-100 text-zinc-600 px-6 py-4 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-zinc-200"><Printer size={16}/> Save as PDF</button>
+                <button onClick={() => {
+                  const msg = `*CHIKWA CAR HIRE*\n*QUOTATION ${adminQuote.reference}*\n\nCustomer: ${adminQuote.customerName}\nPhone: ${adminQuote.phone}\n\nVehicle: ${adminQuote.car.name}\nDuration: ${adminQuote.durationDays} day(s)\n\n*TOTAL: ZMW ${adminQuote.total.toLocaleString()}*\n\nValid until: ${adminQuote.validityDate}\n📞 +260 977 515759`;
+                  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                }} className="flex items-center gap-2 bg-[#25D366] text-white px-6 py-4 rounded-xl font-bold uppercase tracking-widest text-xs"><MessageCircle size={16}/> WhatsApp</button>
+                <button onClick={() => {
+                  const inv: InvoiceData = { ...adminQuote, invoiceNumber: `INV-${format(new Date(),'yyyyMM')}-${Math.random().toString(36).substring(2,7).toUpperCase()}`, dueDate: format(addDays(new Date(),3),'PP'), status: 'UNPAID' };
+                  setAdminInvoice(inv);
+                  setAdminDocStep('invoice');
+                }} className="flex items-center gap-2 bg-brand-blue text-white px-8 py-4 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-brand-orange transition-all"><FileText size={16}/> Convert to Invoice</button>
+                <button onClick={() => { setAdminDocStep('form'); setAdminQuote(null); }} className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest underline underline-offset-4">Start Over</button>
+              </div>
+            </div>
+          )}
+
+          {adminDocStep === 'invoice' && adminInvoice && (
+            <div>
+              <div className="bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden mb-6">
+                <div className="bg-brand-blue px-10 py-8 flex justify-between items-start">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-brand-orange rounded-xl flex items-center justify-center shadow-lg"><CarIcon size={28} className="text-white" /></div>
+                    <div>
+                      <h1 className="text-2xl font-display font-black text-white uppercase">Chikwa Car Hire</h1>
+                      <p className="text-brand-orange text-[10px] font-bold uppercase tracking-[0.3em]">Limited · Lusaka, Zambia</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-4xl font-display font-black text-white uppercase">Invoice</p>
+                    <p className="text-brand-orange font-mono text-xs mt-1">#{adminInvoice.invoiceNumber}</p>
+                    <span className={`mt-2 inline-block px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${adminInvoice.status === 'PAID' ? 'bg-green-400 text-white' : 'bg-brand-orange text-white'}`}>{adminInvoice.status}</span>
+                  </div>
+                </div>
+                <div className="p-10">
+                  <div className="grid md:grid-cols-2 gap-10 mb-10 pb-10 border-b border-zinc-100">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Billed To</p>
+                      <p className="text-2xl font-display font-black text-brand-blue">{adminInvoice.customerName}</p>
+                      <p className="text-zinc-500 text-sm mt-1">{adminInvoice.phone}</p>
+                      <p className="text-zinc-500 text-sm">{adminInvoice.email}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Invoice Details</p>
+                      <p className="text-sm font-bold text-brand-blue">Date: <span className="font-medium text-zinc-500">{format(new Date(adminInvoice.createdAt),'PP')}</span></p>
+                      <p className="text-sm font-bold text-brand-blue">Due: <span className="font-medium text-zinc-500">{adminInvoice.dueDate}</span></p>
+                    </div>
+                  </div>
+                  <div className="space-y-3 mb-10">
+                    <div className="flex justify-between text-sm py-3 border-b border-zinc-100"><span className="text-zinc-500">Base Rental ({adminInvoice.durationDays} days × ZMW {adminInvoice.car.pricePerDay})</span><span className="font-mono font-bold">ZMW {adminInvoice.baseRate.toFixed(2)}</span></div>
+                    {adminInvoice.extras.driver && <div className="flex justify-between text-sm py-3 border-b border-zinc-100"><span className="text-zinc-500">Professional Chauffeur</span><span className="font-mono font-bold">ZMW {(250*adminInvoice.durationDays).toFixed(2)}</span></div>}
+                    {adminInvoice.extras.insurance && <div className="flex justify-between text-sm py-3 border-b border-zinc-100"><span className="text-zinc-500">Extra Insurance</span><span className="font-mono font-bold">ZMW {(150*adminInvoice.durationDays).toFixed(2)}</span></div>}
+                    {adminInvoice.extras.childSeat && <div className="flex justify-between text-sm py-3 border-b border-zinc-100"><span className="text-zinc-500">Child Seat</span><span className="font-mono font-bold">ZMW {(75*adminInvoice.durationDays).toFixed(2)}</span></div>}
+                    <div className="flex justify-between text-sm py-3 border-b border-zinc-100"><span className="text-zinc-500">Subtotal</span><span className="font-mono font-bold">ZMW {adminInvoice.subtotal.toFixed(2)}</span></div>
+                    <div className="flex justify-between text-sm py-3 border-b border-zinc-100"><span className="text-zinc-500">VAT (16%)</span><span className="font-mono font-bold">ZMW {adminInvoice.tax.toFixed(2)}</span></div>
+                    <div className="flex justify-between items-center pt-4">
+                      <span className="text-2xl font-display font-black text-brand-blue uppercase">Total Due</span>
+                      <span className="text-3xl font-display font-black text-brand-orange">ZMW {adminInvoice.total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+                    </div>
+                  </div>
+                  <div className="bg-zinc-50 rounded-2xl p-6 border border-zinc-100">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-4">Payment Instructions</p>
+                    <div className="grid grid-cols-2 gap-6 text-xs font-bold text-brand-blue uppercase tracking-wider">
+                      <div><p className="text-zinc-400 mb-1">Bank Transfer</p><p>Chikwa Car Hire Limited</p><p>Zambia National Commercial Bank</p><p>Acc: 5543 XXXX XXXX</p></div>
+                      <div><p className="text-zinc-400 mb-1">Mobile Money</p><p>Airtel Money: 0978 XXX XXX</p><p>MTN Money: 0968 XXX XXX</p></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-4">
+                <button onClick={() => window.print()} className="flex items-center gap-2 bg-zinc-100 text-zinc-600 px-6 py-4 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-zinc-200"><Printer size={16}/> Save as PDF</button>
+                <button onClick={() => {
+                  const msg = `*CHIKWA CAR HIRE*\n*INVOICE #${adminInvoice.invoiceNumber}*\n\nBilled To: ${adminInvoice.customerName}\nPhone: ${adminInvoice.phone}\n\nVehicle: ${adminInvoice.car.name}\nDuration: ${adminInvoice.durationDays} day(s)\nDue: ${adminInvoice.dueDate}\n\n*TOTAL DUE: ZMW ${adminInvoice.total.toLocaleString()}*\n\n📞 +260 977 515759`;
+                  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                }} className="flex items-center gap-2 bg-[#25D366] text-white px-6 py-4 rounded-xl font-bold uppercase tracking-widest text-xs"><MessageCircle size={16}/> WhatsApp</button>
+                {adminInvoice.status === 'UNPAID' && (
+                  <button onClick={() => {
+                    const rcp: ReceiptData = { ...adminInvoice, status: 'PAID' as const, receiptNumber: `RCP-${format(new Date(),'HHmm')}-${Math.random().toString(36).substring(2,6).toUpperCase()}`, paymentDate: format(new Date(),'PP p'), paymentMethod: 'Cash' };
+                    setAdminReceipt(rcp);
+                    setAdminInvoice({...adminInvoice, status: 'PAID'});
+                    setAdminDocStep('receipt');
+                  }} className="flex items-center gap-2 bg-brand-orange text-white px-8 py-4 rounded-xl font-bold uppercase tracking-widest text-xs hover:opacity-90"><CreditCard size={16}/> Mark as Paid</button>
+                )}
+                <button onClick={() => { setAdminDocStep('form'); setAdminQuote(null); setAdminInvoice(null); }} className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest underline underline-offset-4">Start Over</button>
+              </div>
+            </div>
+          )}
+
+          {adminDocStep === 'receipt' && adminReceipt && (
+            <div>
+              <div className="bg-white rounded-3xl border border-zinc-100 shadow-sm overflow-hidden mb-6">
+                <div className="bg-brand-blue px-10 py-8 flex justify-between items-start">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-brand-orange rounded-xl flex items-center justify-center shadow-lg"><CarIcon size={28} className="text-white" /></div>
+                    <div>
+                      <h1 className="text-2xl font-display font-black text-white uppercase">Chikwa Car Hire</h1>
+                      <p className="text-brand-orange text-[10px] font-bold uppercase tracking-[0.3em]">Limited · Lusaka, Zambia</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-4xl font-display font-black text-white uppercase">Receipt</p>
+                    <p className="text-brand-orange font-mono text-xs mt-1">#{adminReceipt.receiptNumber}</p>
+                    <span className="mt-2 inline-block bg-green-400 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">PAID</span>
+                  </div>
+                </div>
+                <div className="p-10">
+                  <div className="text-center mb-10">
+                    <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                      <CheckCircle2 size={48} className="text-green-500" />
+                    </div>
+                    <h2 className="text-4xl font-display font-black text-brand-blue uppercase">Payment Confirmed</h2>
+                    <p className="text-zinc-400 mt-2">{adminReceipt.paymentDate}</p>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-10 mb-10 pb-10 border-b border-zinc-100">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Received From</p>
+                      <p className="text-2xl font-display font-black text-brand-blue">{adminReceipt.customerName}</p>
+                      <p className="text-zinc-500 text-sm mt-1">{adminReceipt.phone}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-3">Payment Details</p>
+                      <p className="text-sm font-bold text-brand-blue">Method: <span className="font-medium text-zinc-500">{adminReceipt.paymentMethod}</span></p>
+                      <p className="text-sm font-bold text-brand-blue">Date: <span className="font-medium text-zinc-500">{adminReceipt.paymentDate}</span></p>
+                    </div>
+                  </div>
+                  <div className="bg-brand-blue rounded-2xl p-6 flex items-center justify-between mb-10">
+                    <div>
+                      <p className="text-white font-display font-black uppercase text-lg">{adminReceipt.car.name}</p>
+                      <p className="text-brand-orange text-xs font-bold uppercase">{adminReceipt.durationDays} day(s)</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-zinc-400 text-[10px] uppercase font-bold">Amount Paid</p>
+                      <p className="text-3xl font-display font-black text-brand-orange">ZMW {adminReceipt.total.toLocaleString()}</p>
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="inline-block border-4 border-brand-orange rounded-2xl px-12 py-4 rotate-[-2deg] mb-6">
+                      <p className="text-brand-orange font-display font-black uppercase tracking-[0.3em] text-2xl">PAID IN FULL</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-4">
+                <button onClick={() => window.print()} className="flex items-center gap-2 bg-zinc-100 text-zinc-600 px-6 py-4 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-zinc-200"><Printer size={16}/> Save as PDF</button>
+                <button onClick={() => {
+                  const msg = `*CHIKWA CAR HIRE*\n*PAYMENT RECEIPT ✅*\n\nReceipt: ${adminReceipt.receiptNumber}\nDate: ${adminReceipt.paymentDate}\nMethod: ${adminReceipt.paymentMethod}\n\nCustomer: ${adminReceipt.customerName}\nVehicle: ${adminReceipt.car.name}\n\n*AMOUNT PAID: ZMW ${adminReceipt.total.toLocaleString()}*\n\nThank you! 🙏\n📞 +260 977 515759`;
+                  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                }} className="flex items-center gap-2 bg-[#25D366] text-white px-6 py-4 rounded-xl font-bold uppercase tracking-widest text-xs"><MessageCircle size={16}/> WhatsApp</button>
+                <button onClick={() => { setAdminDocStep('form'); setAdminQuote(null); setAdminInvoice(null); setAdminReceipt(null); }} className="flex items-center gap-2 bg-brand-blue text-white px-6 py-4 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-brand-orange transition-all"><ArrowRight size={16}/> New Document</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Quotes Tab */}
+      {activeTab === 'quotes' && (
 
       {/* Quotes Tab */}
       {activeTab === 'quotes' && (
