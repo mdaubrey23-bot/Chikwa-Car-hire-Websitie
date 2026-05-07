@@ -1037,6 +1037,222 @@ const FleetGrid = ({ onBookCar }: { onBookCar: (car: Car) => void }) => {
 };
 
 const QuoteFormCard = ({ initialCar, onSubmit }: { initialCar?: Car, onSubmit: (data: any) => void }) => {
+  const selectedCar = initialCar || FLEET[0];
+  const [formData, setFormData] = useState({
+    customerName: '',
+    lastName: '',
+    title: 'Mr.',
+    ageGroup: '23 to 29 years',
+    phone: '',
+    email: '',
+    comments: '',
+    destination: 'Within Lusaka',
+    driveType: 'Self-drive',
+    gpsNavigation: false,
+    pickupLocation: 'Lusaka International Airport',
+    pickupDate: '',
+    pickupTime: '08:00 AM',
+    dropoffLocation: 'Lusaka International Airport',
+    dropoffDate: '',
+    dropoffTime: '08:00 AM',
+    passengers: 1,
+    carId: initialCar?.id || FLEET[0]?.id || '',
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target as HTMLInputElement;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({
+      ...formData,
+      customerName: `${formData.customerName} ${formData.lastName}`.trim(),
+      pickupDateTime: `${formData.pickupDate}T08:00`,
+      dropoffDateTime: `${formData.dropoffDate}T08:00`,
+      pickupLocation: formData.pickupLocation,
+      dropoffLocation: formData.dropoffLocation,
+      extraDriver: formData.driveType === 'Chauffeur-driven',
+      extraInsurance: false,
+      extraChildSeat: false,
+      payNow: true,
+    });
+  };
+
+  const inputClass = "w-full border border-zinc-300 rounded px-3 py-2 text-sm text-zinc-700 outline-none focus:ring-2 focus:ring-brand-blue bg-white";
+  const labelClass = "text-sm font-medium text-zinc-700 w-48 flex-shrink-0";
+  const rowClass = "flex flex-col sm:flex-row sm:items-center gap-2 py-3 border-b border-zinc-100";
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      {/* Car preview header */}
+      <div className="bg-white border border-zinc-200 rounded-2xl p-8 mb-8 flex flex-col md:flex-row items-center gap-8">
+        <div className="w-48 h-48 flex-shrink-0 flex items-center justify-center">
+          <div className="w-16 h-16 bg-brand-blue rounded-xl flex items-center justify-center">
+            <CarIcon size={32} className="text-white" />
+          </div>
+        </div>
+        <div className="flex-1">
+          {selectedCar && (
+            <>
+              <img src={selectedCar.image} alt={selectedCar.name} className="h-40 object-contain mx-auto md:mx-0 mb-4" />
+              <ul className="space-y-1">
+                <li className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>{selectedCar.name}</li>
+                <li className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>{selectedCar.passengers} Seats</li>
+                <li className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>Automatic & Manual Transmission</li>
+                <li className="flex items-center gap-2 text-sm text-zinc-600"><span className="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>Fully Insured</li>
+              </ul>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Form */}
+      <div className="bg-white border border-zinc-200 rounded-2xl p-8">
+        <form onSubmit={handleSubmit} className="space-y-0">
+
+          <div className={rowClass}>
+            <label className={labelClass}>Car Type <span className="text-brand-blue">*</span></label>
+            <select name="carId" value={formData.carId} onChange={handleChange} className={inputClass}>
+              {FLEET.map(car => <option key={car.id} value={car.id}>{car.name}</option>)}
+            </select>
+          </div>
+
+          <div className={rowClass}>
+            <label className={labelClass}>Passengers <span className="text-brand-blue">*</span></label>
+            <input type="number" name="passengers" min={1} max={20} value={formData.passengers} onChange={handleChange} className={inputClass} />
+          </div>
+
+          <div className={rowClass}>
+            <label className={labelClass}>Destination <span className="text-brand-blue">*</span></label>
+            <select name="destination" value={formData.destination} onChange={handleChange} className={inputClass}>
+              <option>Within Lusaka</option>
+              <option>Outside Lusaka</option>
+              <option>Cross Border</option>
+              <option>Airport Transfer</option>
+            </select>
+          </div>
+
+          <div className={rowClass}>
+            <label className={labelClass}>Self-drive or Chauffeur-driven <span className="text-brand-blue">*</span></label>
+            <select name="driveType" value={formData.driveType} onChange={handleChange} className={inputClass}>
+              <option>Self-drive</option>
+              <option>Chauffeur-driven</option>
+            </select>
+          </div>
+
+          <div className={rowClass}>
+            <label className={labelClass}>GPS Navigation</label>
+            <input type="checkbox" name="gpsNavigation" checked={formData.gpsNavigation as boolean} onChange={handleChange} className="w-4 h-4 accent-brand-blue" />
+          </div>
+
+          <div className={rowClass}>
+            <label className={labelClass}>Pick-up Location <span className="text-brand-blue">*</span></label>
+            <select name="pickupLocation" value={formData.pickupLocation} onChange={handleChange} className={inputClass}>
+              <option>Lusaka International Airport</option>
+              <option>Lusaka City Centre</option>
+              <option>Levy Junction Mall</option>
+              <option>Manda Hill Mall</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          <div className={rowClass}>
+            <label className={labelClass}>Date <span className="text-brand-blue">*</span></label>
+            <input type="date" name="pickupDate" value={formData.pickupDate} onChange={handleChange} required className={inputClass} />
+          </div>
+
+          <div className={rowClass}>
+            <label className={labelClass}>Time <span className="text-brand-blue">*</span></label>
+            <select name="pickupTime" value={formData.pickupTime} onChange={handleChange} className={inputClass}>
+              {['06:00 AM','07:00 AM','08:00 AM','09:00 AM','10:00 AM','11:00 AM','12:00 PM','01:00 PM','02:00 PM','03:00 PM','04:00 PM','05:00 PM','06:00 PM'].map(t => <option key={t}>{t}</option>)}
+            </select>
+          </div>
+
+          <div className={rowClass}>
+            <label className={labelClass}>Drop-off Location <span className="text-brand-blue">*</span></label>
+            <select name="dropoffLocation" value={formData.dropoffLocation} onChange={handleChange} className={inputClass}>
+              <option>Lusaka International Airport</option>
+              <option>Lusaka City Centre</option>
+              <option>Levy Junction Mall</option>
+              <option>Manda Hill Mall</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          <div className={rowClass}>
+            <label className={labelClass}>Date <span className="text-brand-blue">*</span></label>
+            <input type="date" name="dropoffDate" value={formData.dropoffDate} onChange={handleChange} required className={inputClass} />
+          </div>
+
+          <div className={rowClass}>
+            <label className={labelClass}>Time <span className="text-brand-blue">*</span></label>
+            <select name="dropoffTime" value={formData.dropoffTime} onChange={handleChange} className={inputClass}>
+              {['06:00 AM','07:00 AM','08:00 AM','09:00 AM','10:00 AM','11:00 AM','12:00 PM','01:00 PM','02:00 PM','03:00 PM','04:00 PM','05:00 PM','06:00 PM'].map(t => <option key={t}>{t}</option>)}
+            </select>
+          </div>
+
+          <div className={rowClass}>
+            <label className={labelClass}>Title</label>
+            <select name="title" value={formData.title} onChange={handleChange} className={`${inputClass} w-32`}>
+              <option>Mr.</option>
+              <option>Mrs.</option>
+              <option>Ms.</option>
+              <option>Dr.</option>
+            </select>
+          </div>
+
+          <div className={rowClass}>
+            <label className={labelClass}>First Name <span className="text-brand-blue">*</span></label>
+            <input type="text" name="customerName" value={formData.customerName} onChange={handleChange} required className={inputClass} />
+          </div>
+
+          <div className={rowClass}>
+            <label className={labelClass}>Family Name <span className="text-brand-blue">*</span></label>
+            <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} required className={inputClass} />
+          </div>
+
+          <div className={rowClass}>
+            <label className={labelClass}>Age Group Driver <span className="text-brand-blue">*</span></label>
+            <select name="ageGroup" value={formData.ageGroup} onChange={handleChange} className={inputClass}>
+              <option>18 to 22 years</option>
+              <option>23 to 29 years</option>
+              <option>30 to 65 years</option>
+              <option>66 years and above</option>
+            </select>
+          </div>
+
+          <div className={rowClass}>
+            <label className={labelClass}>Phone <span className="text-brand-blue">*</span></label>
+            <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required className={inputClass} />
+          </div>
+
+          <div className={rowClass}>
+            <label className={labelClass}>E-Mail <span className="text-brand-blue">*</span></label>
+            <input type="email" name="email" value={formData.email} onChange={handleChange} required className={inputClass} />
+          </div>
+
+          <div className={rowClass}>
+            <label className={labelClass}>Message</label>
+            <textarea name="comments" value={formData.comments} onChange={handleChange} rows={5} className={inputClass} />
+          </div>
+
+          <div className="pt-6">
+            <p className="text-xs text-zinc-400 mb-4">The Privacy Policy applies. Fields marked with <span className="text-brand-blue">*</span> are required.</p>
+            <button type="submit" className="bg-brand-blue text-white px-10 py-4 rounded-xl font-display font-bold uppercase tracking-widest hover:bg-brand-orange transition-all shadow-lg">
+              Get a Quotation
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  );
+};
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     customerName: '',
