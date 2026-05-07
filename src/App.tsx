@@ -727,7 +727,7 @@ const Hero = ({ onGetQuote }: { onGetQuote: () => void }) => {
           transition={{ duration: 0.8 }}
           className="max-w-2xl"
         >
-          <span className="text-brand-orange font-display font-bold uppercase tracking-[0.3em] text-sm mb-4 block">Vehicle Hiring Experts</span>
+          <span className="text-brand-orange font-display font-bold uppercase tracking-[0.3em] text-sm mb-4 block">We Are Here To Serve You</span>
           <h1 className="text-5xl md:text-7xl font-display font-bold text-zinc-900 leading-tight mb-6">
             Zambia's Best <br />
             <span className="text-brand-blue">Service Provider.</span>
